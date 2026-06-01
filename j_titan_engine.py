@@ -49,6 +49,12 @@ RSI_OVERBOUGHT         = 70.0   # この水準から反転下落したら early_
 EARLY_EXIT_PROFIT_CAP  = 0.03   # 含み益がこれ未満の初期フェーズのみ early_exit 有効
 EARLY_EXIT_DAYS_CAP    = 10     # 保有営業日数がこれ以内の初期フェーズのみ early_exit 有効
 
+# ── 稼ぐための4フィルター ─────────────────────────────────────────────────────
+RS_LOOKBACK       = 42    # 相対強度: 約2ヶ月（42営業日）で銘柄 vs N225 を比較
+PARTIAL_PROFIT_R  = 2.0   # 部分利確: ATR×この倍数で50%を利確しトレーリング継続
+TIME_STOP_DAYS    = 20    # タイムストップ: 保有上限（営業日）
+TIME_STOP_MIN_PNL = 0.01  # タイムストップ: 含み益1%未満のまま20日経過で撤退
+
 SMA_PERIODS    = [20, 25, 30]
 ATR_STOP_MULTS = [1.0, 1.5, 2.0]          # 初期損切り幅 = ATR × 倍率
 ATR_BE_TRIGGER = 1.0                        # 利益が ATR×1.0 に達したら損切りを建値へ
@@ -321,12 +327,13 @@ def build_market_filter_arr(n225_close: pd.Series, idx: pd.DatetimeIndex) -> np.
 # Portfolio Backtest Engine (バックテスト本体)
 # ══════════════════════════════════════════════════════════════════════════════
 def portfolio_backtest(
-    ind_all:      dict,
+    ind_all:       dict,
     atr_stop_mult: float,
-    trailing_pct: float,
-    mkt_above:    np.ndarray,
-    common_idx:   pd.DatetimeIndex,
-    track_skips:  bool = False,
+    trailing_pct:  float,
+    mkt_above:     np.ndarray,
+    common_idx:    pd.DatetimeIndex,
+    n225_arr:      np.ndarray = None,   # 相対強度フィルター用 N225 終値配列
+    track_skips:   bool = False,
 ) -> dict:
     syms = [s for s in SYMBOLS if s in ind_all]
     n    = len(common_idx)
@@ -350,9 +357,12 @@ def portfolio_backtest(
     VR = {s: ind_all[s]["vol_ratio"].values.astype(float) for s in syms}
     EX = {s: ind_all[s]["rsi_exit"].values.astype(bool)   for s in syms}
 
+    N225 = n225_arr if n225_arr is not None else np.full(n, np.nan)
+
     cash      = float(INITIAL_CAPITAL)
     positions = {}   # sym → {entry_price, shares, peak_close, entry_date}
     p_sells   = {}   # sym → (reason, deferred_count)
+    p_partial = {}   # sym → (reason, deferred_count)  部分利確
     p_buys    = {}   # sym → deferred_count
     asset_arr = np.empty(n)
     trades, skips = [], []
@@ -379,6 +389,34 @@ def portfolio_backtest(
                         profit=xproc - ep * sh * (1 + COMMISSION),
                     ))
                 del p_sells[sym]
+
+        # ── Execute partial profit sells at today's open ─────────────────
+        for sym in list(p_partial.keys()):
+            o, pc = O[sym][i], C[sym][prev]
+            reason, dfr = p_partial[sym]
+            if o <= pc - tse_limit(pc) and dfr < 3:
+                p_partial[sym] = (reason, dfr + 1)
+            else:
+                if sym in positions:
+                    pos    = positions[sym]
+                    sh_all = pos["shares"]
+                    sh_half = (sh_all // 2 // LOT) * LOT   # 50%・単元株に切り捨て
+                    ep_pos  = pos["entry_price"]
+                    if sh_half >= LOT:
+                        xproc  = o * sh_half * (1 - COMMISSION)
+                        cash  += xproc
+                        pos["shares"]        -= sh_half
+                        pos["partial_taken"]  = True
+                        pos["stop_price"]     = max(pos["stop_price"], ep_pos)
+                        trades.append(dict(
+                            symbol=sym, shares=sh_half, reason="partial_profit",
+                            entry_date=pos["entry_date"], entry_price=ep_pos,
+                            exit_date=common_idx[i], exit_price=o,
+                            profit=xproc - ep_pos * sh_half * (1 + COMMISSION),
+                        ))
+                    else:
+                        p_sells[sym] = (reason, 0)   # 単元未満なら全決済
+                del p_partial[sym]
 
         # ── Execute pending buys at today's open ──────────────────────────
         for sym in list(p_buys.keys()):
@@ -432,17 +470,24 @@ def portfolio_backtest(
                     pos["be_moved"]   = True
                     sp = ep
 
-                if sym not in p_sells:
-                    if c <= sp:
+                if sym not in p_sells and sym not in p_partial:
+                    days_held = i - pos.get("entry_idx", i)
+                    unr_pct   = (c - ep) / ep if ep > 0 else 0.0
+                    # 部分利確: ATR×PARTIAL_PROFIT_R に達したら50%売り
+                    if (not pos.get("partial_taken") and atr_e > 0
+                            and c >= ep + atr_e * PARTIAL_PROFIT_R):
+                        p_partial[sym] = ("partial_profit", 0)
+                    elif c <= sp:
                         p_sells[sym] = ("stop_loss", 0)
                     elif EX[sym][i]:
                         # ハイブリッド: 含み益<3% OR 保有≤10日 の初期フェーズのみ early_exit
-                        days_held  = i - pos.get("entry_idx", i)
-                        unr_pct    = (c - ep) / ep if ep > 0 else 0.0
                         early_phase = (unr_pct < EARLY_EXIT_PROFIT_CAP or
                                        days_held <= EARLY_EXIT_DAYS_CAP)
                         if early_phase:
                             p_sells[sym] = ("early_exit", 0)
+                    elif days_held >= TIME_STOP_DAYS and unr_pct < TIME_STOP_MIN_PNL:
+                        # タイムストップ: 20日経過で含み益1%未満なら機会損失を切る
+                        p_sells[sym] = ("time_stop", 0)
                     else:
                         ts_line = peak * (1 - trailing_pct)
                         if c <= ts_line:
@@ -457,7 +502,15 @@ def portfolio_backtest(
                     rsi_ok = not np.isnan(rsi_v) and rsi_v >= RSI_THRESHOLD
                     adx_ok = not np.isnan(adx_v) and adx_v >= ADX_THRESHOLD
                     vr_ok  = not np.isnan(vr_v)  and vr_v  >= VOLUME_RATIO_MIN
-                    if mkt_ok and rsi_ok and adx_ok and vr_ok:
+                    # 相対強度: 過去RS_LOOKBACK日で銘柄リターン ≥ N225リターン
+                    rs_idx = max(0, i - RS_LOOKBACK)
+                    if (i >= RS_LOOKBACK and C[sym][rs_idx] > 0
+                            and not np.isnan(N225[i]) and not np.isnan(N225[rs_idx])
+                            and N225[rs_idx] > 0):
+                        rs_ok = (C[sym][i] / C[sym][rs_idx]) / (N225[i] / N225[rs_idx]) >= 1.0
+                    else:
+                        rs_ok = True   # データ不足時はスキップ
+                    if mkt_ok and rsi_ok and adx_ok and vr_ok and rs_ok:
                         p_buys[sym] = 0
                     elif track_skips:
                         if not mkt_ok:
@@ -536,6 +589,10 @@ def run_backtest(df_all: dict, n225_close: pd.Series,
     mkt_train = build_market_filter_arr(n225_close, train_idx)
     mkt_test  = build_market_filter_arr(n225_close, test_idx)
 
+    # 相対強度フィルター用 N225 配列（各期間のインデックスに揃える）
+    n225_train_arr = n225_close.reindex(train_idx).ffill().bfill().fillna(0).values.astype(float)
+    n225_test_arr  = n225_close.reindex(test_idx).ffill().bfill().fillna(0).values.astype(float)
+
     # Pre-compute indicators for all (SMA, ATR_PERIOD) combinations
     print("\n  インジケータ計算中 ...")
     all_ind = {
@@ -565,7 +622,8 @@ def run_backtest(df_all: dict, n225_close: pd.Series,
     for sma, atr_m, ts, atr_p in product(SMA_PERIODS, ATR_STOP_MULTS,
                                           TRAILING_RATES, ATR_PERIODS):
         ind_t = {s: all_ind[(sma, atr_p)][s]["train"] for s in active}
-        r     = portfolio_backtest(ind_t, atr_m, ts, mkt_train, train_idx)
+        r     = portfolio_backtest(ind_t, atr_m, ts, mkt_train, train_idx,
+                                   n225_arr=n225_train_arr)
         is_b  = r["final_asset"] > best_asset
         if is_b:
             best_asset  = r["final_asset"]
@@ -586,7 +644,7 @@ def run_backtest(df_all: dict, n225_close: pd.Series,
     # Test on out-of-sample data
     ind_te = {s: all_ind[(best_sma, best_atr_p)][s]["test"] for s in active}
     result  = portfolio_backtest(ind_te, best_atr_m, best_ts, mkt_test, test_idx,
-                                 track_skips=True)
+                                 n225_arr=n225_test_arr, track_skips=True)
 
     pf_str = f"{result['profit_factor']:.2f}" if result["profit_factor"] != float("inf") else "∞"
     skips  = result["skips"]
@@ -762,6 +820,49 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
                                     f"@ ¥{o:,.0f}  P&L ¥{profit:+,.0f}  "
                                     f"({order.get('reason','signal')})")
 
+        elif action == "partial_sell":
+            if o <= pc - lim and dfr < 3:        # ストップ安: 持越し
+                order["deferred"] = dfr + 1
+                new_pending[sym]  = order
+                exec_log.append(f"  [{sym}] PARTIAL SELL 持越し (ストップ安, {dfr+1}回目)")
+            else:
+                if sym in positions:
+                    pos     = positions[sym]
+                    sh_all  = int(pos["shares"])
+                    sh_half = (sh_all // 2 // LOT) * LOT
+                    ep_pos  = float(pos["entry_price"])
+                    if sh_half >= LOT:
+                        xproc  = o * sh_half * (1 - COMMISSION)
+                        profit = xproc - ep_pos * sh_half * (1 + COMMISSION)
+                        cash  += xproc
+                        total_pnl += profit
+                        pos["shares"]        = sh_all - sh_half
+                        pos["partial_taken"] = True
+                        pos["stop_price"]    = max(float(pos["stop_price"]), ep_pos)
+                        r_trades.append({
+                            "date": str(today.date()), "symbol": sym,
+                            "shares": sh_half, "action": "partial_sell",
+                            "price": round(o, 1), "profit": round(profit, 0),
+                            "reason": "partial_profit",
+                        })
+                        exec_log.append(f"  [{sym}] {NAMES.get(sym,sym)} PARTIAL SELL {sh_half}株 "
+                                        f"@ ¥{o:,.0f}  P&L ¥{profit:+,.0f}  (部分利確)")
+                    else:
+                        # 単元未満なら全決済
+                        xproc  = o * sh_all * (1 - COMMISSION)
+                        profit = xproc - ep_pos * sh_all * (1 + COMMISSION)
+                        cash  += xproc
+                        total_pnl += profit
+                        positions.pop(sym)
+                        r_trades.append({
+                            "date": str(today.date()), "symbol": sym,
+                            "shares": sh_all, "action": "sell",
+                            "price": round(o, 1), "profit": round(profit, 0),
+                            "reason": "partial_profit",
+                        })
+                        exec_log.append(f"  [{sym}] {NAMES.get(sym,sym)} SELL (全株) {sh_all}株 "
+                                        f"@ ¥{o:,.0f}  P&L ¥{profit:+,.0f}")
+
         elif action == "buy":
             if o >= pc + lim and dfr < 2:        # ストップ高: 持越し
                 order["deferred"] = dfr + 1
@@ -834,7 +935,7 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
             ep   = float(pos["entry_price"])
             peak = max(float(pos.get("peak_close", ep)), c)
             pos["peak_close"] = peak
-            sp   = float(pos.get("stop_price", ep * 0.97))
+            sp    = float(pos.get("stop_price", ep * 0.97))
             atr_e = float(pos.get("atr_entry", 0.0))
 
             # 建値移動: 利益がATR×1.0を超えたら損切りラインを建値に
@@ -843,28 +944,45 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
                 pos["be_moved"]   = True
                 sp = ep
 
+            # 保有日数・含み益計算（タイムストップ・部分利確共用）
+            try:
+                ref_idx_s  = ind_all[sym].index
+                entry_dt   = pd.Timestamp(pos["entry_date"])
+                if entry_dt.tzinfo is None:
+                    entry_dt = entry_dt.tz_localize(TOKYO_TZ)
+                entry_pos_i = ref_idx_s.get_loc(entry_dt) if entry_dt in ref_idx_s else 0
+                today_pos_i = ref_idx_s.get_loc(today) if today in ref_idx_s else len(ref_idx_s)-1
+                days_held   = today_pos_i - entry_pos_i
+            except Exception:
+                days_held = 0
+            unr_pct = (c - ep) / ep if ep > 0 else 0.0
+
             if sym not in new_pending:
-                if c <= sp:
+                # 部分利確: ATR×PARTIAL_PROFIT_R 達成で50%売り
+                if (not pos.get("partial_taken") and atr_e > 0
+                        and c >= ep + atr_e * PARTIAL_PROFIT_R):
+                    new_pending[sym] = {"action": "partial_sell",
+                                        "reason": "partial_profit", "deferred": 0}
+                    signal_log.append(
+                        f"  [{sym}] {NAMES.get(sym,sym)} → 明日PARTIAL SELL "
+                        f"(部分利確 ATR×{PARTIAL_PROFIT_R:.1f} 含み益{unr_pct*100:.1f}%)")
+                elif c <= sp:
                     new_pending[sym] = {"action": "sell", "reason": "stop_loss", "deferred": 0}
                     signal_log.append(f"  [{sym}] {NAMES.get(sym,sym)} → 明日SELL (ATR損切 ¥{sp:,.0f})")
                 elif c <= peak * (1 - ts_pct):
                     new_pending[sym] = {"action": "sell", "reason": "trailing_stop", "deferred": 0}
                     signal_log.append(f"  [{sym}] {NAMES.get(sym,sym)} → 明日SELL (トレーリング利確)")
+                elif days_held >= TIME_STOP_DAYS and unr_pct < TIME_STOP_MIN_PNL:
+                    # タイムストップ: 20日保有で含み益1%未満
+                    new_pending[sym] = {"action": "sell", "reason": "time_stop", "deferred": 0}
+                    signal_log.append(
+                        f"  [{sym}] {NAMES.get(sym,sym)} → 明日SELL "
+                        f"(タイムストップ {days_held}日 含み益{unr_pct*100:.1f}%)")
                 else:
                     try:
                         row = ind_all[sym].loc[today]
                         if bool(row.get("rsi_exit", False)):
                             # ハイブリッド: 含み益<3% OR 保有≤10営業日 の初期フェーズのみ
-                            ep_f  = float(pos["entry_price"])
-                            unr_pct = (c - ep_f) / ep_f if ep_f > 0 else 0.0
-                            try:
-                                entry_dt = pd.Timestamp(pos["entry_date"]).tz_localize(TOKYO_TZ)
-                                ref_idx_s = ind_all[sym].index
-                                entry_pos = ref_idx_s.get_loc(entry_dt) if entry_dt in ref_idx_s else 0
-                                today_pos = ref_idx_s.get_loc(today) if today in ref_idx_s else len(ref_idx_s) - 1
-                                days_held = today_pos - entry_pos
-                            except Exception:
-                                days_held = 0
                             early_phase = (unr_pct < EARLY_EXIT_PROFIT_CAP or
                                            days_held <= EARLY_EXIT_DAYS_CAP)
                             if early_phase:
@@ -889,24 +1007,60 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
                 row   = ind_all[sym].loc[today]
                 rsi_v = float(row.get("rsi", float("nan")))
                 adx_v = float(row.get("adx", float("nan")))
+                vr_v  = float(row.get("vol_ratio", float("nan")))
                 rsi_ok = not np.isnan(rsi_v) and rsi_v >= RSI_THRESHOLD
                 adx_ok = not np.isnan(adx_v) and adx_v >= ADX_THRESHOLD
+                vr_ok  = not np.isnan(vr_v)  and vr_v  >= VOLUME_RATIO_MIN
                 if (not pd.isna(row["sma"]) and
                         bool(row["above_sma"]) and bool(row["golden_cross"])):
-                    if n225_ok and rsi_ok and adx_ok:
+                    # 相対強度フィルター
+                    rs_ok = True
+                    try:
+                        sym_idx  = ind_all[sym].index
+                        p_now    = sym_idx.get_loc(today)
+                        p_ago    = max(0, p_now - RS_LOOKBACK)
+                        c_now_rs = float(ind_all[sym].iloc[p_now]["close"])
+                        c_ago_rs = float(ind_all[sym].iloc[p_ago]["close"])
+                        n_now_rs = float(n225_close.asof(today))
+                        n_ago_rs = float(n225_close.iloc[max(0, n225_close.index.get_loc(
+                            n225_close.index.asof(today)) - RS_LOOKBACK)])
+                        if c_ago_rs > 0 and n_ago_rs > 0:
+                            rs_ok = (c_now_rs / c_ago_rs) / (n_now_rs / n_ago_rs) >= 1.0
+                    except Exception:
+                        rs_ok = True
+                    # 決算スキップフィルター（yfinance calendar）
+                    earnings_ok = True
+                    try:
+                        cal = yf.Ticker(f"{sym}.T").calendar
+                        if isinstance(cal, dict) and "Earnings Date" in cal:
+                            earn_dates = cal["Earnings Date"]
+                            if earn_dates:
+                                earn_dt   = pd.Timestamp(earn_dates[0]).date()
+                                days_diff = (earn_dt - today.date()).days
+                                if -3 <= days_diff <= 5:
+                                    earnings_ok = False
+                                    signal_log.append(
+                                        f"  [{sym}] {NAMES.get(sym,sym)} "
+                                        f"【決算スキップ】{earn_dt}（あと{days_diff}日）")
+                    except Exception:
+                        pass
+                    if n225_ok and rsi_ok and adx_ok and vr_ok and rs_ok and earnings_ok:
                         new_pending[sym] = {"action": "buy", "deferred": 0}
                         signal_log.append(
                             f"  [{sym}] {NAMES.get(sym,sym)} → 明日BUY "
-                            f"(GC+SMA上+地合いOK RSI={rsi_v:.1f} ADX={adx_v:.1f})")
+                            f"(GC+SMA上+RS OK RSI={rsi_v:.1f} ADX={adx_v:.1f})")
                     elif not n225_ok:
                         signal_log.append(
                             f"  [{sym}] {NAMES.get(sym,sym)} "
-                            f"【スキップ】市場地合い悪化のため購入を見送りました")
-                    else:
+                            f"【スキップ】市場地合い悪化")
+                    elif not rs_ok:
                         signal_log.append(
                             f"  [{sym}] {NAMES.get(sym,sym)} "
-                            f"【スキップ】RSI/ADX強度不足 "
-                            f"(RSI={rsi_v:.1f}, ADX={adx_v:.1f})")
+                            f"【スキップ】相対強度不足（N225 アンダーパフォーム）")
+                    elif earnings_ok:
+                        signal_log.append(
+                            f"  [{sym}] {NAMES.get(sym,sym)} "
+                            f"【スキップ】RSI/ADX/VR強度不足")
             except KeyError:
                 pass
 
