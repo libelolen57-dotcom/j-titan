@@ -33,7 +33,8 @@ import matplotlib.dates as mdates
 INITIAL_CAPITAL   = 1_000_000
 LOT               = 100          # 単元株
 COMMISSION        = 0.0005       # 片道0.05%
-MAX_SLOTS         = 4            # 同時保有上限（複利: 1枠=総資産÷4 を動的計算）
+MAX_SLOTS         = 5            # 同時保有上限（複利: 1枠=総資産÷5 を動的計算）
+LEVERAGE_FACTOR   = 1.3          # 信用取引レバレッジ倍率（1.0=現物, 1.3〜1.5推奨）
 RISK_PER_TRADE    = 0.015        # 1.5%リスクルール（1トレードの最大損失を総資産の1.5%に制限）
 TEST_DAYS         = 252          # テスト期間（約1年）
 MARKET_SMA        = 25           # 日経地合いフィルター SMA
@@ -42,7 +43,7 @@ MACD_FAST, MACD_SLOW, MACD_SIG = 12, 26, 9
 # ── モメンタムフィルター ─────────────────────────────────────────────────────
 RSI_PERIOD       = 14
 ADX_PERIOD       = 14
-RSI_THRESHOLD    = 50.0   # RSI >= 50 で上昇モメンタムあり
+RSI_THRESHOLD    = 55.0   # RSI >= 55 で明確な上昇モメンタムあり（弱いエントリー排除）
 ADX_THRESHOLD    = 22.0   # トレンドフィルター
 VOLUME_RATIO_MIN = 1.05   # 出来高 >= 20日平均の1.05倍（明らかな閑散シグナル除外）
 RSI_OVERBOUGHT         = 70.0   # この水準から反転下落したら early_exit
@@ -262,22 +263,27 @@ def tse_limit(p: float) -> float:
 def calc_position_size(price: float, atr: float, atr_stop_mult: float,
                        portfolio_value: float) -> int:
     """
-    1.5%リスクルールで最適購入株数（単元株単位）を計算。
+    1.5%リスクルール + 信用取引レバレッジ対応の購入株数計算。
 
-    損失上限 = portfolio_value × RISK_PER_TRADE (1.5%)
+    損失上限 = portfolio_value × RISK_PER_TRADE (1.5%)  ← 純資産ベース（レバレッジ前）
     損切り幅 = ATR × atr_stop_mult
-    購入株数 = min(損失上限÷損切り幅, 1スロット上限) を LOT 切り捨て
+    購入株数 = min(損失上限÷損切り幅, 1スロット信用余力) を LOT 切り捨て
+
+    LEVERAGE_FACTOR=1.3 の場合:
+      総運用可能額 = portfolio_value × 1.3  （現物＋信用建玉の合計上限）
+      1スロット上限 = 総運用可能額 ÷ MAX_SLOTS
 
     Returns: 購入株数（LOT単位）、0=エントリー不可
     """
     sl_dist = atr * atr_stop_mult if atr > 0 else price * 0.03
     if sl_dist <= 0 or price <= 0:
         return 0
-    risk_amount = portfolio_value * RISK_PER_TRADE        # 許容損失額
-    slot_cap    = portfolio_value / MAX_SLOTS              # 1スロット上限
+    risk_amount   = portfolio_value * RISK_PER_TRADE                       # 許容損失額（純資産基準）
+    buying_power  = portfolio_value * LEVERAGE_FACTOR                      # 信用余力込みの総運用可能額
+    slot_cap      = buying_power / MAX_SLOTS                               # 1スロット上限
     lots = min(
-        int(risk_amount / sl_dist / LOT),                 # リスクルール上限
-        int(slot_cap / (price * (1 + COMMISSION)) / LOT), # スロット上限
+        int(risk_amount / sl_dist / LOT),                                  # リスクルール上限
+        int(slot_cap / (price * (1 + COMMISSION)) / LOT),                  # スロット上限（信用余力込み）
     )
     return max(0, lots) * LOT
 
@@ -825,6 +831,27 @@ def run_backtest(df_all: dict, n225_close: pd.Series,
             w = sum(1 for p in profs if p > 0)
             print(f"    {reason:<16}: {len(profs):>3}件  勝率{w/len(profs)*100:5.1f}%  "
                   f"P&L ¥{sum(profs):>+,.0f}")
+
+    # ── 全トレード詳細ログを出力 ──────────────────────────────────────────────
+    if result["trades"]:
+        trades_sorted = sorted(result["trades"], key=lambda t: t["entry_date"])
+        print(f"\n  {'─'*74}")
+        print(f"  全トレード詳細（{len(trades_sorted)}件）")
+        print(f"  {'─'*74}")
+        print(f"  {'エントリー日':<13} {'決済日':<13} {'銘柄':<16} {'理由':<16}"
+              f" {'株数':>5} {'買値':>7} {'売値':>7} {'損益':>9}")
+        print(f"  {'─'*13} {'─'*13} {'─'*16} {'─'*16}"
+              f" {'─'*5} {'─'*7} {'─'*7} {'─'*9}")
+        cum = 0
+        for t in trades_sorted:
+            cum += t["profit"]
+            mark = "✓" if t["profit"] > 0 else "✗"
+            print(f"  {str(t['entry_date'])[:10]:<13} {str(t['exit_date'])[:10]:<13}"
+                  f" {NAMES.get(t['symbol'], t['symbol']):<16}"
+                  f" {t['reason']:<16} {t['shares']:>5}"
+                  f" ¥{t['entry_price']:>6,.0f} ¥{t['exit_price']:>6,.0f}"
+                  f" ¥{t['profit']:>+8,.0f} {mark}  累計¥{cum:>+,.0f}")
+        print(f"  {'─'*74}")
 
     print(f"{'═'*74}\n")
 
