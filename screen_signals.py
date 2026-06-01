@@ -47,11 +47,14 @@ JPX_CSV_URL         = (
     "/misc/tvdivq0000001vg2-att/data_j.xls"
 )
 UNIVERSE_CACHE_PATH = "data/universe_cache.json"
+FUND_CACHE_PATH     = "data/fundamentals_cache.json"   # ROE・黒字キャッシュ
 MKTCAP_MIN_JPY      = 500_0000_0000    # 500億円
 PRICE_MIN_JPY       = 500              # 500円
 TURNOVER_MIN_JPY    = 10_0000_0000     # 10億円/日
 UNIVERSE_TOP_N      = 200
 CACHE_REFRESH_DAYS  = 7
+ROE_MIN             = 0.08             # ROE 8%以上（優良企業足切り）
+FUND_WORKERS        = 8                # ファンダ取得並列数
 
 # ── レート制限・リトライ設定 ──────────────────────────────────────────────────
 RETRY_MAX        = 3   # 最大リトライ回数
@@ -247,6 +250,93 @@ def load_universe_cache(force_rebuild: bool = False) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Step 1.5: ファンダメンタルズ・キャッシュ（週次）
+# ══════════════════════════════════════════════════════════════════════════════
+def _fetch_single_fundamentals(code: str) -> tuple:
+    """1銘柄のROE・黒字状況を取得（429リトライ付き）"""
+    for attempt in range(RETRY_MAX):
+        try:
+            info = yf.Ticker(f"{code}.T").info
+            roe       = info.get("returnOnEquity")     # 例: 0.15 = 15%
+            net_inc   = info.get("netIncomeToCommon")  # 正 = 黒字
+            profitable = (net_inc is not None and net_inc > 0)
+            roe_val    = float(roe) if roe is not None else None
+            return (code, {"roe": roe_val, "profitable": profitable})
+        except Exception as e:
+            if _is_rate_limited(e) and attempt < RETRY_MAX - 1:
+                _wait(attempt, base=5, label=f"fundamentals {code}")
+            else:
+                break
+    return (code, None)
+
+
+def build_fundamentals_cache(codes: list) -> dict:
+    """ROE・黒字状況を並列取得してキャッシュ保存（週次）"""
+    print(f"  ファンダメンタルズ取得中 ({len(codes)} 銘柄, {FUND_WORKERS}並列) ...")
+    result = {}
+    done   = 0
+    with ThreadPoolExecutor(max_workers=FUND_WORKERS) as ex:
+        futures = {ex.submit(_fetch_single_fundamentals, c): c for c in codes}
+        for fut in as_completed(futures):
+            code, data = fut.result()
+            if data:
+                result[code] = data
+            done += 1
+            if done % 100 == 0:
+                print(f"    進捗 {done}/{len(codes)} ...", flush=True)
+
+    os.makedirs("data", exist_ok=True)
+    with open(FUND_CACHE_PATH, "w", encoding="utf-8") as f:
+        json.dump({"updated": datetime.now(TOKYO_TZ).isoformat(),
+                   "codes": result}, f, ensure_ascii=False, indent=2)
+    roe_ok = sum(1 for v in result.values()
+                 if v.get("profitable") and v.get("roe") is not None
+                 and v["roe"] >= ROE_MIN)
+    print(f"  ファンダ取得完了: {len(result)} 銘柄 / ROE≥{ROE_MIN*100:.0f}%かつ黒字: {roe_ok} 銘柄")
+    return result
+
+
+def load_fundamentals_cache(codes: list, force_rebuild: bool = False) -> dict:
+    """ファンダキャッシュ読み込み（7日以内は再利用、期限切れ or なければ再取得）"""
+    if os.path.exists(FUND_CACHE_PATH) and not force_rebuild:
+        try:
+            with open(FUND_CACHE_PATH, encoding="utf-8") as f:
+                cache = json.load(f)
+            updated = datetime.fromisoformat(cache.get("updated", "2000-01-01T00:00:00+09:00"))
+            if updated.tzinfo is None:
+                updated = TOKYO_TZ.localize(updated)
+            age = (datetime.now(TOKYO_TZ) - updated).days
+            if age < CACHE_REFRESH_DAYS:
+                print(f"  ファンダキャッシュ: {len(cache['codes'])} 銘柄 ({age}日前更新)")
+                return cache["codes"]
+        except Exception:
+            pass
+    try:
+        return build_fundamentals_cache(codes)
+    except Exception as e:
+        print(f"  WARNING: ファンダ取得失敗 ({e}) → ファンダフィルターをスキップ")
+        return {}
+
+
+def apply_fundamentals_filter(codes: list, fund_cache: dict) -> list:
+    """ROE≥8% かつ直近黒字の銘柄のみを残す。キャッシュ未取得は通過させる。"""
+    if not fund_cache:
+        return codes
+    filtered = []
+    for code in codes:
+        data = fund_cache.get(code)
+        if data is None:          # キャッシュになければ通過（安全側）
+            filtered.append(code)
+            continue
+        profitable = data.get("profitable", True)
+        roe        = data.get("roe")
+        roe_ok     = (roe is None) or (roe >= ROE_MIN)
+        if profitable and roe_ok:
+            filtered.append(code)
+    return filtered
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Step 2: 売買代金・株価フィルター（毎日、高速）
 # ══════════════════════════════════════════════════════════════════════════════
 def select_dynamic_symbols(top_n: int = UNIVERSE_TOP_N,
@@ -305,18 +395,28 @@ def select_dynamic_symbols(top_n: int = UNIVERSE_TOP_N,
             pass
 
     scored.sort(key=lambda x: -x[2])
-    selected = [code for code, _, _ in scored[:top_n]]
+    pre_fund = [code for code, _, _ in scored[:top_n * 2]]  # ファンダ前バッファ
 
-    print(f"  フィルター通過: {len(scored)} 銘柄 → 上位 {len(selected)} 銘柄を採用")
-    if scored:
+    # ── ファンダメンタルズ足切り（ROE≥8% & 黒字）────────────────────────────
+    fund_cache = load_fundamentals_cache(pre_fund, force_rebuild=force_rebuild)
+    fund_filtered = apply_fundamentals_filter(pre_fund, fund_cache)
+    # ファンダ通過銘柄でスコア再ソートし上位 top_n を選定
+    scored_filtered = [(c, p, t) for c, p, t in scored if c in set(fund_filtered)]
+    selected = [code for code, _, _ in scored_filtered[:top_n]]
+
+    before = len(scored)
+    after  = len(scored_filtered)
+    print(f"  流動性フィルター通過: {before} 銘柄")
+    print(f"  ファンダフィルター後 (ROE≥{ROE_MIN*100:.0f}%&黒字): {after} 銘柄 → 上位 {len(selected)} 銘柄を採用")
+    if scored_filtered:
         print(f"\n  {'順位':<4} {'コード':<7} {'銘柄名':<20} {'株価':>8} {'平均売買代金/日':>14}")
         print(f"  {'─'*4} {'─'*7} {'─'*20} {'─'*8} {'─'*14}")
-        for rank, (code, price, to) in enumerate(scored[:10], 1):
+        for rank, (code, price, to) in enumerate(scored_filtered[:10], 1):
             name = NAMES_STATIC.get(code, code)
             print(f"  {rank:<4} {code:<7} {name:<20} ¥{price:>6,.0f}  "
                   f"¥{to/1e8:>8.1f}億円")
-        if len(scored) > 10:
-            print(f"  ... 他 {len(scored)-10} 銘柄")
+        if len(scored_filtered) > 10:
+            print(f"  ... 他 {len(scored_filtered)-10} 銘柄")
     return selected
 
 
