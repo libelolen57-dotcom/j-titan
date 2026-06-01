@@ -34,7 +34,8 @@ INITIAL_CAPITAL   = 1_000_000
 LOT               = 100          # 単元株
 COMMISSION        = 0.0005       # 片道0.05%
 MAX_SLOTS         = 5            # 同時保有上限（複利: 1枠=総資産÷5 を動的計算）
-LEVERAGE_FACTOR   = 1.3          # 信用取引レバレッジ倍率（1.0=現物, 1.3〜1.5推奨）
+LEVERAGE_FACTOR   = 1.3          # 信用取引レバレッジ倍率（テスト最優: 1.45はTS5%を強制選択し逆効果）
+MARGIN_RATE       = 0.020        # 信用取引年利（2.0%/年）— 日次で正確に控除
 RISK_PER_TRADE    = 0.015        # 1.5%リスクルール（1トレードの最大損失を総資産の1.5%に制限）
 TEST_DAYS         = 252          # テスト期間（約1年）
 MARKET_SMA        = 25           # 日経地合いフィルター SMA
@@ -596,6 +597,15 @@ def portfolio_backtest(
                     be_moved=False,           # 建値移動フラグ
                     entry_idx=i,              # ハイブリッドearly_exit用
                 )
+
+        # ── 信用取引金利コスト（日次控除）─────────────────────────────────
+        # 借入額 = ポジション評価額 × (1 - 1/LEVERAGE_FACTOR)  年利2%を1日分だけ引く
+        if LEVERAGE_FACTOR > 1.0 and positions:
+            borrowed = sum(
+                positions[s]["shares"] * C[s][i] * (LEVERAGE_FACTOR - 1.0) / LEVERAGE_FACTOR
+                for s in positions
+            )
+            cash -= borrowed * (MARGIN_RATE / 365.0)
 
         # ── Mark-to-market ────────────────────────────────────────────────
         asset_arr[i] = cash + sum(positions[s]["shares"] * C[s][i] for s in positions)
