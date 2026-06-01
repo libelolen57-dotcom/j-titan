@@ -525,6 +525,7 @@ def portfolio_backtest(
     p_buys          = {}   # sym → deferred_count
     p_short_covers  = {}   # sym → (reason, deferred_count)  信用売り決済（買い戻し）
     p_short_entries = {}   # sym → deferred_count             信用売り新規
+    gc_wait         = {}   # sym → GC発生後1日待機（2日確認エントリー）
     asset_arr       = np.empty(n)
     trades, skips   = [], []
 
@@ -727,7 +728,14 @@ def portfolio_backtest(
                         else:
                             pos["sma_below_days"] = 0
             elif sym not in p_buys:
-                if not np.isnan(SM[sym][i]) and AV[sym][i] and GC[sym][i]:
+                # GC翌日の再確認（2日エントリー確認: SMA上方かつRSI継続）
+                if sym in gc_wait:
+                    rsi_v2 = RS[sym][i]
+                    if (not np.isnan(SM[sym][i]) and AV[sym][i] and mkt_ok
+                            and not np.isnan(rsi_v2) and rsi_v2 >= RSI_THRESHOLD):
+                        p_buys[sym] = 0
+                    del gc_wait[sym]   # 1回のみ確認（不合格でもクリア）
+                elif not np.isnan(SM[sym][i]) and AV[sym][i] and GC[sym][i]:
                     rsi_v  = RS[sym][i]
                     adx_v  = AD[sym][i]
                     vr_v   = VR[sym][i]
@@ -743,7 +751,7 @@ def portfolio_backtest(
                     else:
                         rs_ok = True   # データ不足時はスキップ
                     if mkt_ok and rsi_ok and adx_ok and vr_ok and rs_ok:
-                        p_buys[sym] = 0
+                        gc_wait[sym] = 0   # 翌日確認待ち
                     elif track_skips:
                         if not mkt_ok:
                             skips.append({"date": common_idx[i], "symbol": sym,
