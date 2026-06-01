@@ -1,0 +1,42 @@
+name: Daily Paper Trade
+
+on:
+  schedule:
+    - cron: '0 7 * * 1-5'  # 16:00 JST (UTC+9) Mon-Fri
+  workflow_dispatch:          # 手動実行も可能（テスト用）
+
+permissions:
+  contents: write
+
+jobs:
+  paper-trade:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install yfinance pandas numpy matplotlib pytz
+
+      - name: Run daily paper trade (auto mode)
+        run: python j_titan_engine.py --mode auto
+
+      - name: Commit and push results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add portfolio.json data/ output/
+          if git diff --staged --quiet; then
+            echo "変化なし — コミットをスキップします"
+          else
+            git commit -m "auto: daily paper trade $(date -u +'%Y-%m-%d') [skip ci]"
+            git push
+          fi

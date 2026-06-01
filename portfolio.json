@@ -1,0 +1,15 @@
+{
+  "created": "2026-06-01",
+  "last_updated": null,
+  "cash": 1000000.0,
+  "positions": {},
+  "pending_orders": {},
+  "realized_trades": [],
+  "total_realized_pnl": 0.0,
+  "params": {
+    "sma": 20,
+    "stop_loss": -0.02,
+    "trailing": 0.025,
+    "source": "backtest optimised on 2026-06-01"
+  }
+}
