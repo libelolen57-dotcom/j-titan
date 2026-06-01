@@ -1,4 +1,4 @@
-name: Daily Paper Trade
+name: Daily Paper Trade & Signal Screener
 
 on:
   schedule:
@@ -29,6 +29,13 @@ jobs:
       - name: Run daily paper trade (auto mode)
         run: python j_titan_engine.py --mode auto
 
+      - name: Run signal screener and save results
+        run: |
+          mkdir -p output
+          DATE=$(TZ='Asia/Tokyo' date +'%Y-%m-%d')
+          python screen_signals.py --fetch | tee output/latest_signals.txt
+          cp output/latest_signals.txt "output/signals_${DATE}.txt"
+
       - name: Commit and push results
         run: |
           git config user.name "github-actions[bot]"
@@ -37,6 +44,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "変化なし — コミットをスキップします"
           else
-            git commit -m "auto: daily paper trade $(date -u +'%Y-%m-%d') [skip ci]"
+            git commit -m "auto: daily trade & signals $(TZ='Asia/Tokyo' date +'%Y-%m-%d') [skip ci]"
             git push
           fi

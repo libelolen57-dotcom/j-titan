@@ -10,6 +10,7 @@
 !.gitignore
 !.github
 !j_titan_engine.py
+!screen_signals.py
 !fetch_master_data.py
 !fetch_japan_data.py
 !advanced_backtest.py

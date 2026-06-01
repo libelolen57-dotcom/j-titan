@@ -7,9 +7,10 @@
   "realized_trades": [],
   "total_realized_pnl": 0.0,
   "params": {
-    "sma": 20,
-    "stop_loss": -0.02,
+    "sma": 25,
+    "atr_stop_mult": 1.0,
     "trailing": 0.025,
+    "atr_period": 14,
     "source": "backtest optimised on 2026-06-01"
   }
 }
