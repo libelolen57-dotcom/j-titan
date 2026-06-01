@@ -24,7 +24,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install yfinance pandas numpy matplotlib pytz
+        run: pip install yfinance pandas numpy matplotlib pytz xlrd openpyxl
 
       - name: Run daily paper trade (auto mode)
         run: python j_titan_engine.py --mode auto
@@ -33,7 +33,14 @@ jobs:
         run: |
           mkdir -p output
           DATE=$(TZ='Asia/Tokyo' date +'%Y-%m-%d')
-          python screen_signals.py --fetch | tee output/latest_signals.txt
+          DOW=$(TZ='Asia/Tokyo' date +'%u')   # 1=月曜日
+          # 月曜日のみユニバースキャッシュを再構築（時価総額フィルター更新）
+          if [ "$DOW" = "1" ]; then
+            echo "月曜日: ユニバースキャッシュ再構築"
+            python screen_signals.py --fetch --rebuild-cache | tee output/latest_signals.txt
+          else
+            python screen_signals.py --fetch | tee output/latest_signals.txt
+          fi
           cp output/latest_signals.txt "output/signals_${DATE}.txt"
 
       - name: Commit and push results
