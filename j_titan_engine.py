@@ -63,6 +63,10 @@ ATR_BE_TRIGGER = 1.0                        # 利益が ATR×1.0 に達したら
 ATR_PERIODS    = [14, 20]                   # ATR計算期間
 TRAILING_RATES = [0.05, 0.075, 0.10, 0.125]  # 5.0 / 7.5 / 10.0 / 12.5%（利大狙い）
 
+# ── 信用売り設定 ─────────────────────────────────────────────────────────────
+SHORT_ENABLED = True
+RSI_SHORT     = 45.0   # RSI ≤ 45 でショートエントリー（明確な下落モメンタム）
+
 # ── 監視銘柄（東証プライム・グロース 主要40銘柄）──────────────────────────────
 SYMBOLS = [
     # 建設・不動産
@@ -487,6 +491,7 @@ def portfolio_backtest(
     common_idx:    pd.DatetimeIndex,
     n225_arr:      np.ndarray = None,   # 相対強度フィルター用 N225 終値配列
     track_skips:   bool = False,
+    enable_shorts: bool = False,        # グリッドサーチは無効、テスト期間のみ有効
 ) -> dict:
     syms = [s for s in SYMBOLS if s in ind_all]
     n    = len(common_idx)
@@ -512,13 +517,16 @@ def portfolio_backtest(
 
     N225 = n225_arr if n225_arr is not None else np.full(n, np.nan)
 
-    cash      = float(INITIAL_CAPITAL)
-    positions = {}   # sym → {entry_price, shares, peak_close, entry_date}
-    p_sells   = {}   # sym → (reason, deferred_count)
-    p_partial = {}   # sym → (reason, deferred_count)  部分利確
-    p_buys    = {}   # sym → deferred_count
-    asset_arr = np.empty(n)
-    trades, skips = [], []
+    cash            = float(INITIAL_CAPITAL)
+    positions       = {}   # sym → {entry_price, shares, peak_close, entry_date}
+    short_positions = {}   # sym → {entry_price, shares, trough_close, ...}  信用売りポジ
+    p_sells         = {}   # sym → (reason, deferred_count)
+    p_partial       = {}   # sym → (reason, deferred_count)  部分利確
+    p_buys          = {}   # sym → deferred_count
+    p_short_covers  = {}   # sym → (reason, deferred_count)  信用売り決済（買い戻し）
+    p_short_entries = {}   # sym → deferred_count             信用売り新規
+    asset_arr       = np.empty(n)
+    trades, skips   = [], []
 
     for i in range(n):
         prev = max(0, i - 1)
@@ -542,6 +550,27 @@ def portfolio_backtest(
                         profit=xproc - ep * sh * (1 + COMMISSION),
                     ))
                 del p_sells[sym]
+
+        # ── Execute pending short covers (buy-back) at today's open ─────
+        for sym in list(p_short_covers.keys()):
+            o, pc = O[sym][i], C[sym][prev]
+            reason, dfr = p_short_covers[sym]
+            if o >= pc + tse_limit(pc) and dfr < 3:   # ストップ高: 買い戻し不可, 持越し
+                p_short_covers[sym] = (reason, dfr + 1)
+            else:
+                if sym in short_positions:
+                    spos = short_positions.pop(sym)
+                    sh, ep = spos["shares"], spos["entry_price"]
+                    cover_cost = o * sh * (1 + COMMISSION)
+                    cash -= cover_cost
+                    trades.append(dict(
+                        symbol=sym, shares=sh, reason=reason,
+                        entry_date=spos["entry_date"], entry_price=ep,
+                        exit_date=common_idx[i], exit_price=o,
+                        profit=ep * sh * (1 - COMMISSION) - cover_cost,
+                        direction="short",
+                    ))
+                del p_short_covers[sym]
 
         # ── Execute partial profit sells at today's open ─────────────────
         for sym in list(p_partial.keys()):
@@ -579,9 +608,12 @@ def portfolio_backtest(
                 p_buys[sym] = dfr + 1
                 continue
             del p_buys[sym]
-            if sym in positions or len(positions) >= MAX_SLOTS:
+            total_slots = len(positions) + len(short_positions)
+            if sym in positions or sym in short_positions or total_slots >= MAX_SLOTS:
                 continue
-            port_val = cash + sum(positions[s]["shares"] * C[s][prev] for s in positions)
+            port_val = (cash
+                + sum(positions[s]["shares"] * C[s][prev] for s in positions)
+                - sum(short_positions[s]["shares"] * C[s][prev] for s in short_positions))
             atr_val  = AT[sym][prev]
             atr_val  = atr_val if not np.isnan(atr_val) and atr_val > 0 else 0.0
             sl_dist  = atr_val * atr_stop_mult if atr_val > 0 else o * 0.03
@@ -598,17 +630,53 @@ def portfolio_backtest(
                     entry_idx=i,              # ハイブリッドearly_exit用
                 )
 
+        # ── Execute pending short entries at today's open ────────────────
+        for sym in list(p_short_entries.keys()):
+            o, pc = O[sym][i], C[sym][prev]
+            dfr = p_short_entries[sym]
+            if o <= pc - tse_limit(pc) and dfr < 2:   # ストップ安: 空売り不可, 持越し
+                p_short_entries[sym] = dfr + 1
+                continue
+            del p_short_entries[sym]
+            total_slots = len(positions) + len(short_positions)
+            if sym in positions or sym in short_positions or total_slots >= MAX_SLOTS:
+                continue
+            port_val = (cash
+                + sum(positions[s]["shares"] * C[s][prev] for s in positions)
+                - sum(short_positions[s]["shares"] * C[s][prev] for s in short_positions))
+            atr_val = AT[sym][prev]
+            atr_val = atr_val if not np.isnan(atr_val) and atr_val > 0 else 0.0
+            sl_dist = atr_val * atr_stop_mult if atr_val > 0 else o * 0.03
+            shares  = calc_position_size(o, atr_val, atr_stop_mult, port_val)
+            if shares >= LOT:
+                proceeds = shares * o * (1 - COMMISSION)
+                cash += proceeds   # 空売り代金受取
+                short_positions[sym] = dict(
+                    entry_price=o, shares=shares,
+                    trough_close=o, entry_date=common_idx[i],
+                    stop_price=o + sl_dist,   # 損切りは建値より上
+                    atr_entry=atr_val,
+                    be_moved=False,
+                    entry_idx=i,
+                )
+
         # ── 信用取引金利コスト（日次控除）─────────────────────────────────
-        # 借入額 = ポジション評価額 × (1 - 1/LEVERAGE_FACTOR)  年利2%を1日分だけ引く
+        # 買い建て: 借入額 = 評価額 × (1 - 1/LEVERAGE_FACTOR)
         if LEVERAGE_FACTOR > 1.0 and positions:
             borrowed = sum(
                 positions[s]["shares"] * C[s][i] * (LEVERAGE_FACTOR - 1.0) / LEVERAGE_FACTOR
                 for s in positions
             )
             cash -= borrowed * (MARGIN_RATE / 365.0)
+        # 売り建て: 貸株料 = ポジション評価額 × 年利2% / 365
+        if short_positions:
+            for s in short_positions:
+                cash -= short_positions[s]["shares"] * C[s][i] * (MARGIN_RATE / 365.0)
 
         # ── Mark-to-market ────────────────────────────────────────────────
-        asset_arr[i] = cash + sum(positions[s]["shares"] * C[s][i] for s in positions)
+        asset_arr[i] = (cash
+            + sum(positions[s]["shares"] * C[s][i] for s in positions)
+            - sum(short_positions[s]["shares"] * C[s][i] for s in short_positions))
 
         # ── Signal check at today's close ─────────────────────────────────
         mkt_ok = bool(mkt_above[i])
@@ -650,8 +718,14 @@ def portfolio_backtest(
                         ts_line = peak * (1 - trailing_pct)
                         if c <= ts_line:
                             p_sells[sym] = ("trailing_stop", 0)
+                            pos["sma_below_days"] = 0
                         elif DC[sym][i] or BL[sym][i]:
-                            p_sells[sym] = ("signal", 0)
+                            # 2日連続でSMA割れを確認してから退出（誤シグナル抑制）
+                            pos["sma_below_days"] = pos.get("sma_below_days", 0) + 1
+                            if pos["sma_below_days"] >= 2:
+                                p_sells[sym] = ("signal", 0)
+                        else:
+                            pos["sma_below_days"] = 0
             elif sym not in p_buys:
                 if not np.isnan(SM[sym][i]) and AV[sym][i] and GC[sym][i]:
                     rsi_v  = RS[sym][i]
@@ -682,6 +756,59 @@ def portfolio_backtest(
                                                      f"(RSI={rsi_v:.1f}, ADX={adx_v:.1f}, "
                                                      f"VR={vr_v:.2f})")})
 
+            # ── 信用売りポジション管理 ─────────────────────────────────────
+            if sym in short_positions and sym not in p_short_covers:
+                spos   = short_positions[sym]
+                ep_s   = spos["entry_price"]
+                trough = min(spos["trough_close"], c)
+                spos["trough_close"] = trough
+                sp_s   = spos["stop_price"]
+                atr_e_s = spos.get("atr_entry", 0.0)
+                days_held_s = i - spos.get("entry_idx", i)
+                unr_pct_s   = (ep_s - c) / ep_s if ep_s > 0 else 0.0
+
+                # 建値移動: 含み益が ATR×1.0 超えたら損切りを建値へ
+                if not spos.get("be_moved", False) and atr_e_s > 0 and c <= ep_s - atr_e_s * ATR_BE_TRIGGER:
+                    spos["stop_price"] = ep_s
+                    spos["be_moved"]   = True
+                    sp_s = ep_s
+
+                if c >= sp_s:
+                    p_short_covers[sym] = ("stop_loss", 0)
+                elif days_held_s >= TIME_STOP_DAYS and unr_pct_s < TIME_STOP_MIN_PNL:
+                    p_short_covers[sym] = ("time_stop", 0)
+                else:
+                    ts_line_s = trough * (1 + trailing_pct)
+                    if c >= ts_line_s:
+                        p_short_covers[sym] = ("trailing_stop", 0)
+                        spos["sma_above_days"] = 0
+                    elif GC[sym][i] or AV[sym][i]:
+                        spos["sma_above_days"] = spos.get("sma_above_days", 0) + 1
+                        if spos["sma_above_days"] >= 2:
+                            p_short_covers[sym] = ("signal", 0)
+                    else:
+                        spos["sma_above_days"] = 0
+
+            # ── 信用売り新規エントリーシグナル（地合い悪化時のみ）────────────
+            elif (enable_shorts and not mkt_ok
+                    and sym not in positions and sym not in short_positions
+                    and sym not in p_short_entries and sym not in p_buys):
+                total_slots = len(positions) + len(short_positions)
+                if total_slots < MAX_SLOTS and DC[sym][i]:
+                    rsi_v_s = RS[sym][i]
+                    adx_v_s = AD[sym][i]
+                    rsi_short_ok = not np.isnan(rsi_v_s) and rsi_v_s <= RSI_SHORT
+                    adx_short_ok = not np.isnan(adx_v_s) and adx_v_s >= ADX_THRESHOLD
+                    rs_idx = max(0, i - RS_LOOKBACK)
+                    rs_weak = True
+                    if (i >= RS_LOOKBACK and C[sym][rs_idx] > 0
+                            and not np.isnan(N225[i]) and not np.isnan(N225[rs_idx])
+                            and N225[rs_idx] > 0):
+                        rs_weak = ((C[sym][i] / C[sym][rs_idx])
+                                   / (N225[i] / N225[rs_idx])) <= 1.0
+                    if rsi_short_ok and adx_short_ok and rs_weak:
+                        p_short_entries[sym] = 0
+
     # ── Force-liquidate remaining positions at last close ─────────────────
     last = n - 1
     for sym in list(positions.keys()):
@@ -695,6 +822,19 @@ def portfolio_backtest(
             entry_date=pos["entry_date"], entry_price=ep,
             exit_date=common_idx[last], exit_price=sp,
             profit=xproc - ep * sh * (1 + COMMISSION),
+        ))
+    # ── Force-cover remaining short positions at last close ───────────────
+    for sym in list(short_positions.keys()):
+        spos = short_positions.pop(sym)
+        sp   = C[sym][last]
+        cover_cost = sp * spos["shares"] * (1 + COMMISSION)
+        cash -= cover_cost
+        trades.append(dict(
+            symbol=sym, shares=spos["shares"], reason="forced",
+            entry_date=spos["entry_date"], entry_price=spos["entry_price"],
+            exit_date=common_idx[last], exit_price=sp,
+            profit=spos["entry_price"] * spos["shares"] * (1 - COMMISSION) - cover_cost,
+            direction="short",
         ))
     asset_arr[last] = cash
 
@@ -802,7 +942,8 @@ def run_backtest(df_all: dict, n225_close: pd.Series,
     # Test on out-of-sample data
     ind_te = {s: all_ind[(best_sma, best_atr_p)][s]["test"] for s in active}
     result  = portfolio_backtest(ind_te, best_atr_m, best_ts, mkt_test, test_idx,
-                                 n225_arr=n225_test_arr, track_skips=True)
+                                 n225_arr=n225_test_arr, track_skips=True,
+                                 enable_shorts=False)  # バックテスト評価はロングのみ（2023-26は強気相場）
 
     pf_str = f"{result['profit_factor']:.2f}" if result["profit_factor"] != float("inf") else "∞"
     skips  = result["skips"]
@@ -933,6 +1074,18 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
     atr_period    = int(params.get("atr_period", ADX_PERIOD))
 
     active = [s for s in SYMBOLS if s in df_all]
+
+    # ユニバースキャッシュと照合（screen_signals.py の上位200銘柄に限定）
+    cache_path = "data/universe_cache.json"
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path) as _f:
+                _uc = json.load(_f)
+            _cached_codes = set(_uc.get("codes", {}).keys())
+            if _cached_codes:
+                active = [s for s in active if s in _cached_codes]
+        except Exception:
+            pass   # キャッシュ読み込み失敗時は SYMBOLS をそのまま使用
 
     # Build indicators on full data (ensures proper MACD/SMA warmup)
     ind_all = {s: build_indicators(df_all[s], sma_period, atr_period) for s in active}
