@@ -17,7 +17,9 @@ Usage:
 import argparse
 import json
 import os
+import random
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
@@ -38,7 +40,7 @@ except ImportError:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 動的ユニバース設定
+# 定数
 # ══════════════════════════════════════════════════════════════════════════════
 JPX_CSV_URL         = (
     "https://www.jpx.co.jp/markets/statistics-equities"
@@ -48,62 +50,126 @@ UNIVERSE_CACHE_PATH = "data/universe_cache.json"
 MKTCAP_MIN_JPY      = 500_0000_0000    # 500億円
 PRICE_MIN_JPY       = 500              # 500円
 TURNOVER_MIN_JPY    = 10_0000_0000     # 10億円/日
-UNIVERSE_TOP_N      = 200              # 毎日スクリーニングする上位銘柄数
-CACHE_REFRESH_DAYS  = 7               # 時価総額キャッシュの有効期限（週次）
-MKTCAP_WORKERS      = 8               # 並列取得スレッド数
+UNIVERSE_TOP_N      = 200
+CACHE_REFRESH_DAYS  = 7
+
+# ── レート制限・リトライ設定 ──────────────────────────────────────────────────
+RETRY_MAX        = 3   # 最大リトライ回数
+RETRY_BASE_WAIT  = 10  # 基本待機秒数（指数バックオフの底）
+RETRY_JITTER_MAX = 5   # ジッター上限秒数（thundering herd 防止）
+MKTCAP_WORKERS   = 4   # 並列スレッド数（8→4 に削減してレート制限を緩和）
 
 SMA_DEFAULT = 25
 
 
-def _load_sma_from_portfolio() -> int:
-    path = os.path.join(os.path.dirname(__file__), "portfolio.json")
-    if os.path.exists(path):
-        with open(path) as f:
-            p = json.load(f)
-        return int(p.get("params", {}).get("sma", SMA_DEFAULT))
-    return SMA_DEFAULT
+# ══════════════════════════════════════════════════════════════════════════════
+# リトライユーティリティ
+# ══════════════════════════════════════════════════════════════════════════════
+def _is_rate_limited(exc: Exception) -> bool:
+    """yfinance / requests の 429 Too Many Requests を検出"""
+    msg = str(exc).lower()
+    return "429" in msg or "too many requests" in msg or "rate limit" in msg
+
+
+def _wait(attempt: int, base: int = RETRY_BASE_WAIT, label: str = "") -> None:
+    """指数バックオフ + ジッターで待機（429 は長め、その他は一定）"""
+    secs = base * (2 ** attempt) + random.uniform(0, RETRY_JITTER_MAX)
+    tag  = f" ({label})" if label else ""
+    print(f"    → {secs:.0f}秒待機してリトライ {attempt + 1}/{RETRY_MAX}{tag}",
+          flush=True)
+    time.sleep(secs)
+
+
+def _yf_download_with_retry(tickers: list, period: str = "1mo",
+                             **kwargs) -> pd.DataFrame:
+    """
+    yf.download のラッパー。
+    429 → 指数バックオフ（10 / 20 / 40 秒）でリトライ。
+    空データ → 一定待機（10 秒）でリトライ。
+    全リトライ失敗時は空 DataFrame を返す。
+    """
+    for attempt in range(RETRY_MAX):
+        try:
+            df = yf.download(tickers, period=period,
+                             auto_adjust=True, progress=False, **kwargs)
+            if not df.empty:
+                return df
+            # 空データは一時的な障害として扱う
+            if attempt < RETRY_MAX - 1:
+                print(f"    WARNING: データが空 (attempt {attempt+1})")
+                _wait(attempt, base=RETRY_BASE_WAIT, label="空データ")
+        except Exception as e:
+            if _is_rate_limited(e):
+                print(f"    WARNING: 429 レート制限 (attempt {attempt+1}): {e}")
+                if attempt < RETRY_MAX - 1:
+                    _wait(attempt, base=RETRY_BASE_WAIT, label="429")
+            elif attempt < RETRY_MAX - 1:
+                print(f"    WARNING: 取得エラー (attempt {attempt+1}): {e}")
+                _wait(0, base=RETRY_BASE_WAIT, label="一時エラー")
+            else:
+                print(f"    ERROR: 全リトライ失敗: {e}")
+    return pd.DataFrame()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Step 1: 銘柄ユニバース構築（週次キャッシュ）
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_prime_codes() -> list:
-    """JPX公式ExcelからTSEプライム・内国株式の4桁コードを取得"""
-    print("  JPX公式CSVダウンロード中 ...", flush=True)
-    try:
-        df = pd.read_excel(JPX_CSV_URL, header=0, dtype=str)
-    except Exception as e:
-        print(f"    WARNING: JPX CSV 取得失敗 ({e})")
-        return []
+    """
+    JPX 公式 Excel から東証プライム・内国株式の4桁コードを取得。
+    ネットワーク障害に備えて最大 RETRY_MAX 回リトライする。
+    """
+    for attempt in range(RETRY_MAX):
+        try:
+            print(f"  JPX公式CSVダウンロード中 (attempt {attempt+1}) ...", flush=True)
+            df = pd.read_excel(JPX_CSV_URL, header=0, dtype=str)
 
-    df.columns = df.columns.str.strip()
-    mkt_col  = next((c for c in df.columns if "市場" in c), None)
-    code_col = next((c for c in df.columns if "コード" in c), None)
-    if mkt_col is None or code_col is None:
-        print(f"    WARNING: 期待するカラムが見つかりません ({list(df.columns)})")
-        return []
+            df.columns = df.columns.str.strip()
+            mkt_col  = next((c for c in df.columns if "市場" in c), None)
+            code_col = next((c for c in df.columns if "コード" in c), None)
+            if mkt_col is None or code_col is None:
+                print(f"    WARNING: 期待するカラムが見つかりません: {list(df.columns)}")
+                return []
 
-    prime = df[df[mkt_col].str.contains("プライム（内国株式）", na=False)]
-    codes = prime[code_col].str.strip().tolist()
-    codes = [c for c in codes if isinstance(c, str) and len(c) == 4 and c.isdigit()]
-    print(f"    東証プライム（内国株式）: {len(codes)} 銘柄取得")
-    return codes
+            prime = df[df[mkt_col].str.contains("プライム（内国株式）", na=False)]
+            codes = prime[code_col].str.strip().tolist()
+            codes = [c for c in codes
+                     if isinstance(c, str) and len(c) == 4 and c.isdigit()]
+            print(f"    東証プライム（内国株式）: {len(codes)} 銘柄取得")
+            return codes
+
+        except Exception as e:
+            print(f"    WARNING: JPX CSV 取得失敗 (attempt {attempt+1}): {e}")
+            if attempt < RETRY_MAX - 1:
+                _wait(0, base=RETRY_BASE_WAIT, label="JPX CSV")
+
+    print("    ERROR: JPX CSV 全リトライ失敗")
+    return []
 
 
 def _fetch_single_mktcap(code: str) -> tuple:
-    """単一銘柄の時価総額を取得（ThreadPoolExecutor用）"""
-    try:
-        fi = yf.Ticker(f"{code}.T").fast_info
-        mc = getattr(fi, "market_cap", None)
-        return (code, int(mc) if mc else None)
-    except Exception:
-        return (code, None)
+    """
+    単一銘柄の時価総額を取得（ThreadPoolExecutor 用）。
+    429 時は指数バックオフでリトライ。
+    """
+    for attempt in range(RETRY_MAX):
+        try:
+            fi = yf.Ticker(f"{code}.T").fast_info
+            mc = getattr(fi, "market_cap", None)
+            return (code, int(mc) if mc else None)
+        except Exception as e:
+            if _is_rate_limited(e) and attempt < RETRY_MAX - 1:
+                time.sleep(RETRY_BASE_WAIT * (2 ** attempt)
+                           + random.uniform(0, RETRY_JITTER_MAX))
+            else:
+                break
+    return (code, None)
 
 
 def build_universe_cache(prime_codes: list) -> dict:
     """全プライム銘柄の時価総額を並列取得 → 500億円以上をキャッシュ（週次）"""
     print(f"  時価総額フィルター構築中 ({len(prime_codes)} 銘柄) ...")
-    print("  ※ 初回・週次更新は数分かかります")
+    print(f"  ※ 初回・週次更新は数分かかります（{MKTCAP_WORKERS}並列）")
     mktcap_map = {}
     done = 0
     with ThreadPoolExecutor(max_workers=MKTCAP_WORKERS) as ex:
@@ -114,8 +180,8 @@ def build_universe_cache(prime_codes: list) -> dict:
                 mktcap_map[code] = mc
             done += 1
             if done % 200 == 0:
-                print(f"    進捗 {done}/{len(prime_codes)} ... 通過 {len(mktcap_map)} 銘柄",
-                      flush=True)
+                print(f"    進捗 {done}/{len(prime_codes)} ... "
+                      f"通過 {len(mktcap_map)} 銘柄", flush=True)
 
     print(f"  時価総額500億円以上: {len(mktcap_map)} 銘柄")
     os.makedirs("data", exist_ok=True)
@@ -129,29 +195,55 @@ def build_universe_cache(prime_codes: list) -> dict:
 
 
 def load_universe_cache(force_rebuild: bool = False) -> dict:
-    """キャッシュ読み込み。期限切れ or force_rebuild なら再構築"""
-    if not force_rebuild and os.path.exists(UNIVERSE_CACHE_PATH):
+    """
+    キャッシュ読み込みロジック（優先順位順）:
+      1. キャッシュ有効（7日以内）かつ force_rebuild=False → そのまま返す
+      2. 期限切れ or force_rebuild → JPX CSV + 時価総額で再構築を試みる
+      3. 再構築失敗 → 期限切れの旧キャッシュで代替（JPX障害時のフォールバック）
+      4. キャッシュが存在しない → 固定 SYMBOLS にフォールバック
+    """
+    stale_codes = None  # 期限切れでも保持しておくフォールバック用
+
+    # ── 既存キャッシュを確認 ───────────────────────────────────────────────
+    if os.path.exists(UNIVERSE_CACHE_PATH):
         try:
             with open(UNIVERSE_CACHE_PATH, encoding="utf-8") as f:
                 cache = json.load(f)
-            updated_str = cache.get("updated", "2000-01-01T00:00:00+00:00")
-            updated = datetime.fromisoformat(updated_str)
-            if updated.tzinfo is None:
-                updated = TOKYO_TZ.localize(updated)
-            age = (datetime.now(TOKYO_TZ) - updated).days
-            if age < CACHE_REFRESH_DAYS:
-                codes = cache.get("codes", {})
-                print(f"  ユニバースキャッシュ: {len(codes)} 銘柄 ({age}日前更新)")
-                return codes
-            print(f"  ユニバースキャッシュ期限切れ ({age}日) → 再構築")
-        except Exception as e:
-            print(f"  キャッシュ読み込みエラー ({e}) → 再構築")
 
+            stale_codes = cache.get("codes", {})  # 後段フォールバック用に退避
+
+            if not force_rebuild:
+                updated_str = cache.get("updated", "2000-01-01T00:00:00+00:00")
+                updated = datetime.fromisoformat(updated_str)
+                if updated.tzinfo is None:
+                    updated = TOKYO_TZ.localize(updated)
+                age = (datetime.now(TOKYO_TZ) - updated).days
+                if age < CACHE_REFRESH_DAYS:
+                    print(f"  ユニバースキャッシュ: {len(stale_codes)} 銘柄 "
+                          f"({age}日前更新)")
+                    return stale_codes
+                print(f"  ユニバースキャッシュ期限切れ ({age}日) → 再構築試行")
+
+        except Exception as e:
+            print(f"  キャッシュ読み込みエラー ({e}) → 再構築試行")
+
+    # ── 再構築試行 ──────────────────────────────────────────────────────────
     prime_codes = fetch_prime_codes()
-    if not prime_codes:
-        print("  WARNING: JPX CSV 取得失敗 → 固定SYMBOLSにフォールバック")
-        return {s: 0 for s in SYMBOLS_STATIC}
-    return build_universe_cache(prime_codes)
+    if prime_codes:
+        try:
+            return build_universe_cache(prime_codes)
+        except Exception as e:
+            print(f"  WARNING: キャッシュ再構築失敗 ({e})")
+
+    # ── フォールバック: 旧キャッシュ（期限切れ）で代替 ──────────────────────
+    if stale_codes:
+        print(f"  WARNING: JPX CSV 取得失敗 → 旧キャッシュ（期限切れ）で代替 "
+              f"({len(stale_codes)} 銘柄)")
+        return stale_codes
+
+    # ── 最終フォールバック: 固定 SYMBOLS ──────────────────────────────────
+    print("  WARNING: キャッシュなし → 固定SYMBOLSにフォールバック")
+    return {s: 0 for s in SYMBOLS_STATIC}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -161,7 +253,7 @@ def select_dynamic_symbols(top_n: int = UNIVERSE_TOP_N,
                            force_rebuild: bool = False) -> list:
     """
     1. 時価総額キャッシュ（週次）から候補コードを取得
-    2. yf.download で1ヶ月OHLCV一括取得
+    2. yf.download（429リトライ付き）で1ヶ月OHLCV一括取得
     3. 株価≥500円 & 平均売買代金≥10億円/日 でフィルタリング
     4. 売買代金降順で上位 top_n 銘柄を返す
     """
@@ -176,15 +268,10 @@ def select_dynamic_symbols(top_n: int = UNIVERSE_TOP_N,
     print(f"\n  売買代金・株価フィルター ({len(candidates)} 銘柄 → 1ヶ月データ一括取得) ...",
           flush=True)
     tickers = [f"{c}.T" for c in candidates]
-    try:
-        raw = yf.download(tickers, period="1mo", auto_adjust=True,
-                          progress=False)
-    except Exception as e:
-        print(f"  WARNING: 一括取得失敗 ({e}) → 固定SYMBOLSにフォールバック")
-        return list(SYMBOLS_STATIC)
 
+    raw = _yf_download_with_retry(tickers, period="1mo")
     if raw.empty:
-        print("  WARNING: データ取得結果が空 → 固定SYMBOLSにフォールバック")
+        print("  WARNING: データ取得失敗 → 固定SYMBOLSにフォールバック")
         return list(SYMBOLS_STATIC)
 
     is_multi = isinstance(raw.columns, pd.MultiIndex)
@@ -249,6 +336,15 @@ def score_signal(row: pd.Series, prev_row: pd.Series) -> float:
 # ══════════════════════════════════════════════════════════════════════════════
 # スクリーナー本体
 # ══════════════════════════════════════════════════════════════════════════════
+def _load_sma_from_portfolio() -> int:
+    path = os.path.join(os.path.dirname(__file__), "portfolio.json")
+    if os.path.exists(path):
+        with open(path) as f:
+            p = json.load(f)
+        return int(p.get("params", {}).get("sma", SMA_DEFAULT))
+    return SMA_DEFAULT
+
+
 def run_screener(use_fetch: bool, top_n: int,
                  static_mode: bool = False,
                  force_rebuild: bool = False) -> None:
@@ -260,15 +356,13 @@ def run_screener(use_fetch: bool, top_n: int,
         symbols    = list(SYMBOLS_STATIC)
         names      = NAMES_STATIC
         mode_label = f"固定リスト ({len(symbols)} 銘柄)"
-        # 固定モードでは --fetch フラグに従う
-        loader = load_or_fetch if use_fetch else load_csv
+        loader     = load_or_fetch if use_fetch else load_csv
     else:
         symbols    = select_dynamic_symbols(UNIVERSE_TOP_N,
                                             force_rebuild=force_rebuild)
         names      = {s: NAMES_STATIC.get(s, s) for s in symbols}
         mode_label = f"動的選定 上位{len(symbols)}銘柄"
-        # 動的モードは常に load_or_fetch（未取得銘柄を自動ダウンロード）
-        loader = load_or_fetch
+        loader     = load_or_fetch   # 未取得銘柄を自動ダウンロード
 
     print(f"\n{'═'*72}")
     print(f"  J-Titan シグナルスクリーナー  {today_jst.strftime('%Y-%m-%d %H:%M')}")
