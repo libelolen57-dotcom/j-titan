@@ -58,6 +58,18 @@ jobs:
             git push
           fi
 
+      - name: Run BTC paper trade & dashboard
+        run: |
+          python btc_paper_trade.py
+          python btc_dashboard.py > btc_log/dashboard_$(TZ='Asia/Tokyo' date +'%Y-%m-%d').txt 2>&1 || true
+
+      - name: Commit BTC paper trade results
+        run: |
+          git add btc_portfolio.json btc_log/ || true
+          if ! git diff --staged --quiet; then
+            git commit -m "auto: BTC paper trade $(TZ='Asia/Tokyo' date +'%Y-%m-%d') [skip ci]"
+          fi
+
       - name: Send Telegram notification
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

@@ -22,6 +22,16 @@
 # 戦略比較スクリプト
 !compare_strategies.py
 
+# ── BTC エアトレードシステム ─────────────────────────────────────
+!btc_paper_trade.py
+!btc_dashboard.py
+!btc_history.py
+!btc_strategy_v5.py
+!btc_strategy_v6.py
+!btc_portfolio.json
+!btc_log
+!btc_log/**
+
 # 株価データ（GitHub Actions が参照）
 !data
 !data/**

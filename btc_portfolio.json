@@ -1,0 +1,17 @@
+{
+  "initial_capital": 500000,
+  "cash": 500000,
+  "position": {
+    "qty": 0.0,
+    "entry_price": 0.0,
+    "entry_date": null,
+    "stop_price": 0.0,
+    "trail_hi": 0.0,
+    "tp_done": false
+  },
+  "trades": [],
+  "total_trades": 0,
+  "wins": 0,
+  "created_at": "2026-06-03T01:32:41.617008+09:00",
+  "last_updated": "2026-06-03T01:34:16.077339+09:00"
+}
