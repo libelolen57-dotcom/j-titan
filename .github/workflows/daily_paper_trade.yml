@@ -61,53 +61,45 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          DATE=$(TZ='Asia/Tokyo' date +'%Y-%m-%d')
-          SIGNAL_FILE="output/signals_${DATE}.txt"
+          python3 - <<'PYEOF'
+          import json, os, re, urllib.request, urllib.parse
+          from datetime import datetime
+          import pytz
 
-          # シグナル数を抽出
-          BUY_COUNT=0
-          if [ -f "$SIGNAL_FILE" ]; then
-            BUY_COUNT=$(grep -c "買いシグナル確定" "$SIGNAL_FILE" 2>/dev/null || echo 0)
-            # 実際のシグナル銘柄数を抽出
-            SIGNAL_LINE=$(grep "買い確定:" "$SIGNAL_FILE" | grep -oP '買い確定: \K\d+' || echo "0")
-            BUY_COUNT=${SIGNAL_LINE:-0}
-          fi
+          token = os.environ["TELEGRAM_BOT_TOKEN"]
+          chat_id = os.environ["TELEGRAM_CHAT_ID"]
+          date_str = datetime.now(pytz.timezone("Asia/Tokyo")).strftime("%Y-%m-%d")
+          signal_file = f"output/signals_{date_str}.txt"
 
-          # ポートフォリオ情報
-          CASH=$(python3 -c "import json; d=json.load(open('portfolio.json')); print(f'{d[\"cash\"]:,.0f}')" 2>/dev/null || echo "-")
-          PNL=$(python3 -c "import json; d=json.load(open('portfolio.json')); p=d.get('total_realized_pnl',0); print(f'+{p:,.0f}' if p>=0 else f'{p:,.0f}')" 2>/dev/null || echo "-")
-          POS_COUNT=$(python3 -c "import json; d=json.load(open('portfolio.json')); print(len(d.get('positions',{})))" 2>/dev/null || echo "-")
+          signals, market_status, buy_count = [], "", 0
+          if os.path.exists(signal_file):
+              text = open(signal_file).read()
+              m = re.search(r'買い確定:\s*(\d+)', text)
+              buy_count = int(m.group(1)) if m else 0
+              m2 = re.search(r'地合い\S+', text)
+              market_status = m2.group(0) if m2 else ""
+              for line in text.splitlines():
+                  m3 = re.match(r'^\s+(\d{4})\s+(\S+)\s+[¥￥]\s*([\d,]+)\s+([\d.]+)\s+([\d.]+)', line)
+                  if m3:
+                      signals.append(f"{m3.group(1)} {m3.group(2)} ¥{m3.group(3)} RSI:{m3.group(4)}")
 
-          # 地合い
-          MARKET_STATUS=$(grep -oP '地合い\S+' "$SIGNAL_FILE" 2>/dev/null | head -1 || echo "")
+          pf = json.load(open("portfolio.json"))
+          cash = f'{pf["cash"]:,.0f}'
+          pnl = pf.get("total_realized_pnl", 0)
+          pnl_str = f'+{pnl:,.0f}' if pnl >= 0 else f'{pnl:,.0f}'
+          pos_count = len(pf.get("positions", {}))
 
-          # Telegramメッセージ構築
-          if [ "$BUY_COUNT" -gt 0 ] 2>/dev/null; then
-            SIGNAL_DETAIL=$(grep -A1 "買いシグナル確定" "$SIGNAL_FILE" 2>/dev/null | tail -20 || echo "")
-            CODES=$(grep -E "^\s+[0-9]{4}" "$SIGNAL_FILE" 2>/dev/null | awk '{print $1, $2}' | head -5 | tr '\n' '\n' || echo "")
-            MSG="🟢 *J-Titan シグナル発生* ${DATE}
+          if buy_count > 0:
+              codes = "\n".join(signals[:5])
+              msg = (f"🟢 *J-Titan シグナル発生* {date_str}\n\n"
+                     f"買いシグナル: {buy_count}銘柄\n{codes}\n{market_status}\n\n"
+                     f"💰 現金: ¥{cash}\n📊 保有: {pos_count}件\n📈 確定損益: ¥{pnl_str}")
+          else:
+              msg = (f"⬜ *J-Titan 日次レポート* {date_str}\n\n"
+                     f"シグナルなし\n{market_status}\n\n"
+                     f"💰 現金: ¥{cash}\n📊 保有: {pos_count}件\n📈 確定損益: ¥{pnl_str}")
 
-買いシグナル: ${BUY_COUNT}銘柄
-${CODES}
-${MARKET_STATUS}
-
-💰 現金: ¥${CASH}
-📊 保有: ${POS_COUNT}件
-📈 確定損益: ¥${PNL}"
-          else
-            MSG="⬜ *J-Titan 日次レポート* ${DATE}
-
-シグナルなし
-${MARKET_STATUS}
-
-💰 現金: ¥${CASH}
-📊 保有: ${POS_COUNT}件
-📈 確定損益: ¥${PNL}"
-          fi
-
-          curl -s -X POST \
-            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            -d "chat_id=${TELEGRAM_CHAT_ID}" \
-            -d "parse_mode=Markdown" \
-            --data-urlencode "text=${MSG}" \
-            > /dev/null
+          data = urllib.parse.urlencode({"chat_id": chat_id, "text": msg, "parse_mode": "Markdown"}).encode()
+          urllib.request.urlopen(f"https://api.telegram.org/bot{token}/sendMessage", data)
+          print("Telegram通知送信完了")
+          PYEOF
