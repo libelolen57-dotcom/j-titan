@@ -93,15 +93,15 @@ jobs:
 
           if buy_count > 0:
               codes = "\n".join(signals[:5])
-              msg = (f"🟢 *J-Titan シグナル発生* {date_str}\n\n"
+              msg = (f"[J-Titan] シグナル発生 {date_str}\n\n"
                      f"買いシグナル: {buy_count}銘柄\n{codes}\n{market_status}\n\n"
-                     f"💰 現金: ¥{cash}\n📊 保有: {pos_count}件\n📈 確定損益: ¥{pnl_str}")
+                     f"現金: {cash}円\n保有: {pos_count}件\n確定損益: {pnl_str}円")
           else:
-              msg = (f"⬜ *J-Titan 日次レポート* {date_str}\n\n"
+              msg = (f"[J-Titan] 日次レポート {date_str}\n\n"
                      f"シグナルなし\n{market_status}\n\n"
-                     f"💰 現金: ¥{cash}\n📊 保有: {pos_count}件\n📈 確定損益: ¥{pnl_str}")
+                     f"現金: {cash}円\n保有: {pos_count}件\n確定損益: {pnl_str}円")
 
-          data = urllib.parse.urlencode({"chat_id": chat_id, "text": msg, "parse_mode": "Markdown"}).encode()
+          data = urllib.parse.urlencode({"chat_id": chat_id, "text": msg}).encode()
           urllib.request.urlopen(f"https://api.telegram.org/bot{token}/sendMessage", data)
           print("Telegram通知送信完了")
           PYEOF
