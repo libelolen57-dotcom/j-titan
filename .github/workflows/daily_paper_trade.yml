@@ -117,15 +117,25 @@ jobs:
           jp_line = pf_summary("portfolio.json",    "道A(JP)")
           us_line = pf_summary("portfolio_us.json", "道B(US)")
 
+          # BTC エアトレードサマリーを読込
+          btc_summary = ""
+          btc_file = f"btc_log/today_summary.txt"
+          if os.path.exists(btc_file):
+              btc_raw = open(btc_file).read()
+              # HTMLタグを除去してプレーンテキストに
+              btc_summary = "\n\n" + btc_raw.replace("<b>","").replace("</b>","")
+
           if buy_count > 0:
               codes = "\n".join(signals[:5])
               msg = (f"[J-Titan] シグナル発生 {date_str}\n\n"
                      f"買いシグナル: {buy_count}銘柄\n{codes}\n{market_status}\n\n"
-                     f"{jp_line}\n{us_line}")
+                     f"{jp_line}\n{us_line}"
+                     f"{btc_summary}")
           else:
               msg = (f"[J-Titan] 日次レポート {date_str}\n\n"
                      f"シグナルなし\n{market_status}\n\n"
-                     f"{jp_line}\n{us_line}")
+                     f"{jp_line}\n{us_line}"
+                     f"{btc_summary}")
 
           import json as _json
           payload = _json.dumps({"chat_id": int(chat_id), "text": msg}).encode("utf-8")

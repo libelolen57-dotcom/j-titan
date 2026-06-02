@@ -506,9 +506,16 @@ def main():
     log_text = write_log(today_str, df, pf, actions, stats)
     print(f"  ログ保存: {LOG_DIR}/{today_str}.txt")
 
-    # Telegram 通知
-    tg_msg = build_telegram_msg(today_str, df, actions, stats, pf)
-    send_telegram(tg_msg)
+    # Telegram 通知（単体実行時のみ。GitHub Actions では workflow の統合通知が送る）
+    if os.environ.get("BTC_SEND_TELEGRAM", "0") == "1":
+        tg_msg = build_telegram_msg(today_str, df, actions, stats, pf)
+        send_telegram(tg_msg)
+
+    # workflow 統合通知用サマリーをファイルに書き出す
+    summary = build_telegram_msg(today_str, df, actions, stats, pf)
+    os.makedirs(LOG_DIR, exist_ok=True)
+    with open(os.path.join(LOG_DIR, "today_summary.txt"), "w", encoding="utf-8") as f:
+        f.write(summary)
 
     # 終了コードでシグナルを伝える（CI での表示用）
     print("\n" + "─"*50)
