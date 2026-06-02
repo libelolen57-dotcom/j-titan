@@ -1,0 +1,18 @@
+{
+  "created": "2026-06-03",
+  "last_updated": "2026-06-02",
+  "cash": 1000000.0,
+  "positions": {},
+  "pending_orders": {},
+  "total_realized_pnl": 0.0,
+  "params": {
+    "sma": 30,
+    "atr_stop_mult": 2.0,
+    "trailing": 0.075,
+    "atr_period": 20,
+    "source": "us-default (道B WF最適値)"
+  },
+  "realized_trades": [],
+  "gc_wait": {},
+  "stop_cooldowns": {}
+}

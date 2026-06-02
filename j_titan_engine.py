@@ -32,40 +32,42 @@ import matplotlib.dates as mdates
 # ══════════════════════════════════════════════════════════════════════════════
 INITIAL_CAPITAL   = 1_000_000
 LOT               = 100          # 単元株
-COMMISSION        = 0.0005       # 片道0.05%
-MAX_SLOTS         = 5            # 同時保有上限（複利: 1枠=総資産÷5 を動的計算）
+COMMISSION        = 0.001        # 片道0.10%（実際のオンライン証券に合わせて修正）
+MAX_SLOTS         = 3            # 同時保有上限（精鋭3枠: 品質重視）
 LEVERAGE_FACTOR   = 1.3          # 信用取引レバレッジ倍率（テスト最優: 1.45はTS5%を強制選択し逆効果）
 MARGIN_RATE       = 0.020        # 信用取引年利（2.0%/年）— 日次で正確に控除
 RISK_PER_TRADE    = 0.015        # 1.5%リスクルール（1トレードの最大損失を総資産の1.5%に制限）
 TEST_DAYS         = 252          # テスト期間（約1年）
-MARKET_SMA        = 25           # 日経地合いフィルター SMA
+MARKET_SMA        = 25           # 日経地合いフィルター SMA（短期）
+MARKET_SMA_SLOW   = 75           # 日経地合いフィルター SMA（中期: 両方上回って初めて買い許可）
 MACD_FAST, MACD_SLOW, MACD_SIG = 12, 26, 9
 
 # ── モメンタムフィルター ─────────────────────────────────────────────────────
 RSI_PERIOD       = 14
 ADX_PERIOD       = 14
-RSI_THRESHOLD    = 55.0   # RSI >= 55 で明確な上昇モメンタムあり（弱いエントリー排除）
-ADX_THRESHOLD    = 22.0   # トレンドフィルター
-VOLUME_RATIO_MIN = 1.05   # 出来高 >= 20日平均の1.05倍（明らかな閑散シグナル除外）
-RSI_OVERBOUGHT         = 70.0   # この水準から反転下落したら early_exit
-EARLY_EXIT_PROFIT_CAP  = 0.03   # 含み益がこれ未満の初期フェーズのみ early_exit 有効
-EARLY_EXIT_DAYS_CAP    = 10     # 保有営業日数がこれ以内の初期フェーズのみ early_exit 有効
+RSI_THRESHOLD    = 60.0   # RSI >= 60 で強い上昇モメンタム
+RSI_MAX          = 75.0   # RSI <= 75 で過買われエントリーを禁止（終盤エントリー排除）
+ADX_THRESHOLD    = 25.0   # トレンドフィルター
+VOLUME_RATIO_MIN = 1.05   # 出来高 >= 20日平均の1.05倍
+MIN_HOLD_DAYS_SMA   = 3   # SMA離脱退出の最短保有日数（3営業日未満はDC/SMA退出しない）
+STOP_COOLDOWN_DAYS  = 30  # stop_loss後の同一銘柄再エントリー禁止日数
 
 # ── 稼ぐための4フィルター ─────────────────────────────────────────────────────
 RS_LOOKBACK       = 42    # 相対強度: 約2ヶ月（42営業日）で銘柄 vs N225 を比較
-PARTIAL_PROFIT_R  = 2.0   # 部分利確: ATR×この倍数で50%を利確しトレーリング継続
+PARTIAL_PROFIT_R  = 2.0   # 部分利確1: ATR×この倍数で50%を利確
+PARTIAL_PROFIT_R2 = 3.5   # 部分利確2: ATR×この倍数で残り50%の50%を追加利確
 TIME_STOP_DAYS    = 20    # タイムストップ: 保有上限（営業日）
 TIME_STOP_MIN_PNL = 0.01  # タイムストップ: 含み益1%未満のまま20日経過で撤退
+
 
 SMA_PERIODS    = [20, 25, 30]
 ATR_STOP_MULTS = [1.5, 1.8, 2.0]           # 初期損切り幅 = ATR × 倍率（1.8中心に攻め寄り）
 ATR_BE_TRIGGER = 1.0                        # 利益が ATR×1.0 に達したら損切りを建値へ
 ATR_PERIODS    = [14, 20]                   # ATR計算期間
-TRAILING_RATES = [0.05, 0.075, 0.10, 0.125]  # 5.0 / 7.5 / 10.0 / 12.5%（利大狙い）
+TRAILING_RATES = [0.075, 0.10, 0.125, 0.15]  # 7.5 / 10.0 / 12.5 / 15.0%（利大狙い: 5%撤廃）
 
-# ── 信用売り設定 ─────────────────────────────────────────────────────────────
-SHORT_ENABLED = True
-RSI_SHORT     = 45.0   # RSI ≤ 45 でショートエントリー（明確な下落モメンタム）
+# ── 信用売り設定（バックテストのみ有効: enable_shorts=True 時）──────────────
+RSI_SHORT = 45.0   # RSI ≤ 45 でショートエントリー（明確な下落モメンタム）
 
 # ── 監視銘柄（東証プライム・グロース 主要40銘柄）──────────────────────────────
 SYMBOLS = [
@@ -236,6 +238,42 @@ TICKER_MAP["N225"] = "^N225"
 
 TOKYO_TZ       = pytz.timezone("Asia/Tokyo")
 PORTFOLIO_PATH = "portfolio.json"
+UNIVERSE       = "jp"   # "jp" or "us" — overridden by --universe flag
+
+# ── 米国株ユニバース（道B） ────────────────────────────────────────────────
+US_RSI_THRESHOLD = 55.0
+US_RSI_MAX       = 82.0
+US_ADX_THRESHOLD = 20.0
+US_DATA_DIR      = "data/us"
+SPXMARKET        = "^GSPC"
+US_SYMBOLS = [
+    "NVDA", "TSM", "AVGO", "AMD", "QCOM", "TXN", "MU", "AMAT", "LRCX",
+    "MSFT", "ORCL", "CRM", "ADBE", "NOW",
+    "AAPL", "AMZN", "GOOGL", "META",
+    "UNH", "LLY", "ABBV", "MRK", "TMO",
+    "JPM", "V", "MA", "GS", "BLK",
+    "COST", "HD", "NKE",
+    "XOM", "CVX",
+    "RTX", "LMT",
+    "T", "VZ",
+]
+US_NAMES = {
+    "NVDA": "NVIDIA",     "TSM": "TSMC",         "AVGO": "Broadcom",
+    "AMD": "AMD",         "QCOM": "Qualcomm",    "TXN": "TI",
+    "MU": "Micron",       "AMAT": "AppMaterials", "LRCX": "LamResearch",
+    "MSFT": "Microsoft",  "ORCL": "Oracle",       "CRM": "Salesforce",
+    "ADBE": "Adobe",      "NOW": "ServiceNow",
+    "AAPL": "Apple",      "AMZN": "Amazon",       "GOOGL": "Alphabet",
+    "META": "Meta",
+    "UNH": "UnitedHealth","LLY": "EliLilly",      "ABBV": "AbbVie",
+    "MRK": "Merck",       "TMO": "ThermoFisher",
+    "JPM": "JPMorgan",    "V": "Visa",             "MA": "Mastercard",
+    "GS": "Goldman",      "BLK": "BlackRock",
+    "COST": "Costco",     "HD": "HomeDepot",       "NKE": "Nike",
+    "XOM": "ExxonMobil",  "CVX": "Chevron",
+    "RTX": "RTX",         "LMT": "Lockheed",
+    "T": "AT&T",          "VZ": "Verizon",
+}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -281,7 +319,7 @@ def calc_position_size(price: float, atr: float, atr_stop_mult: float,
     Returns: 購入株数（LOT単位）、0=エントリー不可
     """
     sl_dist = atr * atr_stop_mult if atr > 0 else price * 0.03
-    if sl_dist <= 0 or price <= 0:
+    if sl_dist <= 0 or price <= 0 or np.isnan(price) or np.isnan(sl_dist):
         return 0
     risk_amount   = portfolio_value * RISK_PER_TRADE                       # 許容損失額（純資産基準）
     buying_power  = portfolio_value * LEVERAGE_FACTOR                      # 信用余力込みの総運用可能額
@@ -376,14 +414,74 @@ def load_and_refresh(code: str):
     return df_hist
 
 
+def load_and_refresh_us(code: str) -> pd.DataFrame:
+    """米国株: CSV読み込み + 最新7日分をyfinanceで補完・保存"""
+    os.makedirs(US_DATA_DIR, exist_ok=True)
+    path = f"{US_DATA_DIR}/{code}.csv"
+    df_hist = None
+    if os.path.exists(path):
+        df_hist = pd.read_csv(path, index_col=0, parse_dates=True).sort_index()
+        if df_hist.index.tz is None:
+            df_hist.index = df_hist.index.tz_localize("UTC").tz_convert(TOKYO_TZ)
+        else:
+            df_hist.index = df_hist.index.tz_convert(TOKYO_TZ)
+        if "Volume" in df_hist.columns:
+            df_hist = df_hist[df_hist["Volume"].notna() & (df_hist["Volume"] > 0)]
+    today = datetime.now(TOKYO_TZ).date()
+    try:
+        df_new = yf.download(code, start=today - timedelta(days=7),
+                             end=today + timedelta(days=1),
+                             auto_adjust=True, progress=False)
+        if not df_new.empty:
+            df_new = _normalise(df_new)
+            if "Volume" in df_new.columns:
+                df_new = df_new[df_new["Volume"].notna() & (df_new["Volume"] > 0)]
+            df = pd.concat([df_hist, df_new]) if df_hist is not None else df_new
+            df = df[~df.index.duplicated(keep="last")].sort_index()
+            df.to_csv(path)
+            return df
+    except Exception:
+        pass
+    return df_hist
+
+
+def load_and_refresh_spx() -> pd.Series:
+    """S&P500終値系列をロード + 最新データを補完"""
+    os.makedirs(US_DATA_DIR, exist_ok=True)
+    path = f"{US_DATA_DIR}/SPX.csv"
+    df_hist = None
+    if os.path.exists(path):
+        df_hist = pd.read_csv(path, index_col=0, parse_dates=True).sort_index()
+        if df_hist.index.tz is None:
+            df_hist.index = df_hist.index.tz_localize("UTC").tz_convert(TOKYO_TZ)
+        else:
+            df_hist.index = df_hist.index.tz_convert(TOKYO_TZ)
+    today = datetime.now(TOKYO_TZ).date()
+    try:
+        df_new = yf.download(SPXMARKET, start=today - timedelta(days=7),
+                             end=today + timedelta(days=1),
+                             auto_adjust=True, progress=False)
+        if not df_new.empty:
+            df_new = _normalise(df_new)
+            df = pd.concat([df_hist, df_new]) if df_hist is not None else df_new
+            df = df[~df.index.duplicated(keep="last")].sort_index()
+            df.to_csv(path)
+            return df["Close"] if "Close" in df.columns else pd.Series(dtype=float)
+    except Exception:
+        pass
+    if df_hist is not None and "Close" in df_hist.columns:
+        return df_hist["Close"]
+    return pd.Series(dtype=float)
+
+
 def load_or_fetch(code: str) -> pd.DataFrame:
-    """Load from CSV; if missing, fetch 5-year history from yfinance and save."""
+    """Load from CSV; if missing, fetch 7-year history from yfinance and save."""
     path = f"data/{code}.csv"
     if os.path.exists(path):
         return load_csv(code)
     ticker = TICKER_MAP.get(code, f"{code}.T")
     today  = datetime.now(TOKYO_TZ).date()
-    start  = today - timedelta(days=5 * 365 + 5)
+    start  = today - timedelta(days=7 * 365 + 5)
     try:
         df = yf.download(ticker, start=start, end=today,
                          auto_adjust=True, progress=False)
@@ -463,20 +561,24 @@ def build_indicators(df: pd.DataFrame, sma_period: int,
     atr       = compute_atr(df, atr_period)
     avg_vol   = df["Volume"].rolling(20).mean()
     vol_ratio = df["Volume"] / avg_vol.replace(0, np.nan)
-    # early_exit: 2日以上連続でRSI>70（連続過熱）した後に前日比下落した初日
-    rsi_exit  = (rsi.shift(2) > RSI_OVERBOUGHT) & (rsi.shift(1) > RSI_OVERBOUGHT) & (rsi < rsi.shift(1))
     return pd.DataFrame({
         "close": c, "open": df["Open"], "sma": sma,
         "golden_cross": gc, "dead_cross": dc,
         "above_sma": c > sma, "below_sma": c < sma,
         "rsi": rsi, "adx": adx, "atr": atr, "vol_ratio": vol_ratio,
-        "rsi_exit": rsi_exit,
     })
 
 
+N225_HIGH_52W_MIN = 0.85   # 日経が52週高値の85%以上でなければ買い禁止
+
+
 def build_market_filter_arr(n225_close: pd.Series, idx: pd.DatetimeIndex) -> np.ndarray:
-    sma25 = n225_close.rolling(MARKET_SMA).mean()
-    above = (n225_close > sma25).reindex(idx).ffill().fillna(True)
+    sma_fast  = n225_close.rolling(MARKET_SMA).mean()
+    sma_slow  = n225_close.rolling(MARKET_SMA_SLOW).mean()
+    high_52w  = n225_close.rolling(252).max()
+    near_high = n225_close / high_52w.replace(0, np.nan) >= N225_HIGH_52W_MIN
+    above = ((n225_close > sma_fast) & (n225_close > sma_slow)
+             & near_high).reindex(idx).ffill().fillna(True)
     return above.values.astype(bool)
 
 
@@ -493,7 +595,7 @@ def portfolio_backtest(
     track_skips:   bool = False,
     enable_shorts: bool = False,        # グリッドサーチは無効、テスト期間のみ有効
 ) -> dict:
-    syms = [s for s in SYMBOLS if s in ind_all]
+    syms = [s for s in ind_all.keys()]
     n    = len(common_idx)
     if n == 0 or not syms:
         empty_idx = common_idx[:1] if n else pd.DatetimeIndex([])
@@ -513,7 +615,6 @@ def portfolio_backtest(
     AD = {s: ind_all[s]["adx"].values.astype(float)       for s in syms}
     AT = {s: ind_all[s]["atr"].values.astype(float)      for s in syms}
     VR = {s: ind_all[s]["vol_ratio"].values.astype(float) for s in syms}
-    EX = {s: ind_all[s]["rsi_exit"].values.astype(bool)   for s in syms}
 
     N225 = n225_arr if n225_arr is not None else np.full(n, np.nan)
 
@@ -521,6 +622,7 @@ def portfolio_backtest(
     positions       = {}   # sym → {entry_price, shares, peak_close, entry_date}
     short_positions = {}   # sym → {entry_price, shares, trough_close, ...}  信用売りポジ
     p_sells         = {}   # sym → (reason, deferred_count)
+    stop_cooldown   = {}   # sym → last_stop_loss_idx（再エントリー禁止期間管理）
     p_partial       = {}   # sym → (reason, deferred_count)  部分利確
     p_buys          = {}   # sym → deferred_count
     p_short_covers  = {}   # sym → (reason, deferred_count)  信用売り決済（買い戻し）
@@ -588,11 +690,14 @@ def portfolio_backtest(
                     if sh_half >= LOT:
                         xproc  = o * sh_half * (1 - COMMISSION)
                         cash  += xproc
-                        pos["shares"]        -= sh_half
-                        pos["partial_taken"]  = True
-                        pos["stop_price"]     = max(pos["stop_price"], ep_pos)
+                        pos["shares"] -= sh_half
+                        if reason == "partial_profit":
+                            pos["partial_taken"]  = True
+                            pos["stop_price"]     = max(pos["stop_price"], ep_pos)
+                        else:
+                            pos["partial_taken_2"] = True  # 第2部分利確
                         trades.append(dict(
-                            symbol=sym, shares=sh_half, reason="partial_profit",
+                            symbol=sym, shares=sh_half, reason=reason,
                             entry_date=pos["entry_date"], entry_price=ep_pos,
                             exit_date=common_idx[i], exit_price=o,
                             profit=xproc - ep_pos * sh_half * (1 + COMMISSION),
@@ -625,10 +730,10 @@ def portfolio_backtest(
                 positions[sym] = dict(
                     entry_price=o, shares=shares,
                     peak_close=o, entry_date=common_idx[i],
-                    stop_price=o - sl_dist,   # ATR動的損切り価格
+                    stop_price=o - sl_dist,
                     atr_entry=atr_val,
-                    be_moved=False,           # 建値移動フラグ
-                    entry_idx=i,              # ハイブリッドearly_exit用
+                    be_moved=False,
+                    entry_idx=i,
                 )
 
         # ── Execute pending short entries at today's open ────────────────
@@ -700,18 +805,17 @@ def portfolio_backtest(
                 if sym not in p_sells and sym not in p_partial:
                     days_held = i - pos.get("entry_idx", i)
                     unr_pct   = (c - ep) / ep if ep > 0 else 0.0
-                    # 部分利確: ATR×PARTIAL_PROFIT_R に達したら50%売り
+                    # 部分利確1: ATR×PARTIAL_PROFIT_R で50%売り
                     if (not pos.get("partial_taken") and atr_e > 0
                             and c >= ep + atr_e * PARTIAL_PROFIT_R):
                         p_partial[sym] = ("partial_profit", 0)
+                    # 部分利確2: ATR×PARTIAL_PROFIT_R2 で残り50%の半分を追加売り
+                    elif (pos.get("partial_taken") and not pos.get("partial_taken_2")
+                            and atr_e > 0 and c >= ep + atr_e * PARTIAL_PROFIT_R2):
+                        p_partial[sym] = ("partial_profit_2", 0)
                     elif c <= sp:
                         p_sells[sym] = ("stop_loss", 0)
-                    elif EX[sym][i]:
-                        # ハイブリッド: 含み益<3% OR 保有≤10日 の初期フェーズのみ early_exit
-                        early_phase = (unr_pct < EARLY_EXIT_PROFIT_CAP or
-                                       days_held <= EARLY_EXIT_DAYS_CAP)
-                        if early_phase:
-                            p_sells[sym] = ("early_exit", 0)
+                        stop_cooldown[sym] = i   # 同一銘柄クールダウン開始
                     elif days_held >= TIME_STOP_DAYS and unr_pct < TIME_STOP_MIN_PNL:
                         # タイムストップ: 20日経過で含み益1%未満なら機会損失を切る
                         p_sells[sym] = ("time_stop", 0)
@@ -720,8 +824,8 @@ def portfolio_backtest(
                         if c <= ts_line:
                             p_sells[sym] = ("trailing_stop", 0)
                             pos["sma_below_days"] = 0
-                        elif DC[sym][i] or BL[sym][i]:
-                            # 2日連続でSMA割れを確認してから退出（誤シグナル抑制）
+                        elif days_held >= MIN_HOLD_DAYS_SMA and (DC[sym][i] or BL[sym][i]):
+                            # 最短保有日数経過後のみ SMA離脱退出（短期誤シグナル防止）
                             pos["sma_below_days"] = pos.get("sma_below_days", 0) + 1
                             if pos["sma_below_days"] >= 2:
                                 p_sells[sym] = ("signal", 0)
@@ -731,15 +835,18 @@ def portfolio_backtest(
                 # GC翌日の再確認（2日エントリー確認: SMA上方かつRSI継続）
                 if sym in gc_wait:
                     rsi_v2 = RS[sym][i]
+                    cooldown_ok = (sym not in stop_cooldown or
+                                   i - stop_cooldown[sym] >= STOP_COOLDOWN_DAYS)
                     if (not np.isnan(SM[sym][i]) and AV[sym][i] and mkt_ok
-                            and not np.isnan(rsi_v2) and rsi_v2 >= RSI_THRESHOLD):
+                            and not np.isnan(rsi_v2) and RSI_THRESHOLD <= rsi_v2 <= RSI_MAX
+                            and cooldown_ok):
                         p_buys[sym] = 0
                     del gc_wait[sym]   # 1回のみ確認（不合格でもクリア）
                 elif not np.isnan(SM[sym][i]) and AV[sym][i] and GC[sym][i]:
                     rsi_v  = RS[sym][i]
                     adx_v  = AD[sym][i]
                     vr_v   = VR[sym][i]
-                    rsi_ok = not np.isnan(rsi_v) and rsi_v >= RSI_THRESHOLD
+                    rsi_ok = not np.isnan(rsi_v) and RSI_THRESHOLD <= rsi_v <= RSI_MAX
                     adx_ok = not np.isnan(adx_v) and adx_v >= ADX_THRESHOLD
                     vr_ok  = not np.isnan(vr_v)  and vr_v  >= VOLUME_RATIO_MIN
                     # 相対強度: 過去RS_LOOKBACK日で銘柄リターン ≥ N225リターン
@@ -750,7 +857,9 @@ def portfolio_backtest(
                         rs_ok = (C[sym][i] / C[sym][rs_idx]) / (N225[i] / N225[rs_idx]) >= 1.0
                     else:
                         rs_ok = True   # データ不足時はスキップ
-                    if mkt_ok and rsi_ok and adx_ok and vr_ok and rs_ok:
+                    cooldown_ok = (sym not in stop_cooldown or
+                                   i - stop_cooldown[sym] >= STOP_COOLDOWN_DAYS)
+                    if mkt_ok and rsi_ok and adx_ok and vr_ok and rs_ok and cooldown_ok:
                         gc_wait[sym] = 0   # 翌日確認待ち
                     elif track_skips:
                         if not mkt_ok:
@@ -913,39 +1022,47 @@ def run_backtest(df_all: dict, n225_close: pd.Series,
         for atr_p in ATR_PERIODS
     }
 
-    # Grid search on training data
+    # Grid search on training data — Calmar比率最大化（年率リターン÷最大DD）
+    n_years  = len(train_idx) / 252
     n_combos = len(SMA_PERIODS) * len(ATR_STOP_MULTS) * len(TRAILING_RATES) * len(ATR_PERIODS)
     print(f"\n{'─'*74}")
-    print(f"  グリッドサーチ  ({n_combos} 組合せ × 訓練期間)  ※地合いフィルター込み")
+    print(f"  グリッドサーチ  ({n_combos} 組合せ × 訓練期間)  最適化指標: Calmar比率")
     print(f"{'─'*74}")
     print(f"  {'SMA':>4} {'ATR×':>6} {'TS':>6} {'ATRp':>5}  {'最終資産(¥)':>16} "
-          f"{'リターン':>8} {'取引':>6} {'勝率':>6} {'PF':>6}")
-    print(f"  {'─'*4} {'─'*6} {'─'*6} {'─'*5}  {'─'*16} {'─'*8} {'─'*6} {'─'*6} {'─'*6}")
+          f"{'リターン':>8} {'MaxDD':>7} {'Calmar':>7} {'取引':>6}")
+    print(f"  {'─'*4} {'─'*6} {'─'*6} {'─'*5}  {'─'*16} {'─'*8} {'─'*7} {'─'*7} {'─'*6}")
 
-    best_asset, best_params = -float("inf"), None
-    best_pf = 0.0
+    best_calmar, best_params = -float("inf"), None
+    best_r_at_best = None
 
     for sma, atr_m, ts, atr_p in product(SMA_PERIODS, ATR_STOP_MULTS,
                                           TRAILING_RATES, ATR_PERIODS):
         ind_t = {s: all_ind[(sma, atr_p)][s]["train"] for s in active}
         r     = portfolio_backtest(ind_t, atr_m, ts, mkt_train, train_idx,
                                    n225_arr=n225_train_arr)
-        is_b  = r["final_asset"] > best_asset
+        ann_ret = r["total_return"] / n_years
+        max_dd  = abs(r["max_drawdown"])
+        # Calmar = 年率リターン ÷ 最大DD（取引5件以上・黒字のみ対象）
+        if max_dd > 0 and r["total_trades"] >= 5 and r["total_return"] > 0:
+            calmar = ann_ret / max_dd
+        else:
+            calmar = -float("inf")
+        is_b = calmar > best_calmar
         if is_b:
-            best_asset  = r["final_asset"]
-            best_params = (sma, atr_m, ts, atr_p)
-            best_pf     = r["profit_factor"]
+            best_calmar    = calmar
+            best_params    = (sma, atr_m, ts, atr_p)
+            best_r_at_best = r
         mark = " ◀" if is_b else ""
-        pf_s = f"{r['profit_factor']:.2f}" if r["profit_factor"] != float("inf") else "∞"
+        calmar_s = f"{calmar:.2f}" if calmar != -float("inf") else "—"
         print(f"  {sma:>4} {atr_m:>5.1f}x {ts*100:>5.1f}% {atr_p:>5}  "
               f"{r['final_asset']:>16,.0f} {r['total_return']:>+7.1f}% "
-              f"{r['total_trades']:>6} {r['win_rate']:>5.1f}% {pf_s:>6}{mark}")
+              f"{r['max_drawdown']:>+6.1f}% {calmar_s:>7} {r['total_trades']:>6}{mark}")
 
     best_sma, best_atr_m, best_ts, best_atr_p = best_params
-    pf_best_s = f"{best_pf:.2f}" if best_pf != float("inf") else "∞"
     print(f"\n  ★ 最適パラメータ: SMA={best_sma}, ATR×{best_atr_m:.1f}, "
           f"Trailing={best_ts*100:.1f}%, ATR期間={best_atr_p}日")
-    print(f"     訓練期間 最終資産: ¥{best_asset:,.0f}  PF: {pf_best_s}")
+    print(f"     訓練期間 Calmar比率: {best_calmar:.2f}  "
+          f"(年率{best_r_at_best['total_return']/n_years:+.1f}% ÷ DD{best_r_at_best['max_drawdown']:.1f}%)")
 
     # Test on out-of-sample data
     ind_te = {s: all_ind[(best_sma, best_atr_p)][s]["test"] for s in active}
@@ -1083,26 +1200,34 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
 
     active = [s for s in SYMBOLS if s in df_all]
 
-    # ユニバースキャッシュと照合（screen_signals.py の上位200銘柄に限定）
-    cache_path = "data/universe_cache.json"
-    if os.path.exists(cache_path):
-        try:
-            with open(cache_path) as _f:
-                _uc = json.load(_f)
-            _cached_codes = set(_uc.get("codes", {}).keys())
-            if _cached_codes:
-                active = [s for s in active if s in _cached_codes]
-        except Exception:
-            pass   # キャッシュ読み込み失敗時は SYMBOLS をそのまま使用
+    # ユニバースキャッシュと照合（日本株のみ: screen_signals.py の上位200銘柄に限定）
+    if UNIVERSE == "jp":
+        cache_path = "data/universe_cache.json"
+        if os.path.exists(cache_path):
+            try:
+                with open(cache_path) as _f:
+                    _uc = json.load(_f)
+                _cached_codes = set(_uc.get("codes", {}).keys())
+                if _cached_codes:
+                    active = [s for s in active if s in _cached_codes]
+            except Exception:
+                pass   # キャッシュ読み込み失敗時は SYMBOLS をそのまま使用
 
     # Build indicators on full data (ensures proper MACD/SMA warmup)
     ind_all = {s: build_indicators(df_all[s], sma_period, atr_period) for s in active}
 
-    # Determine "today" = latest date common to all active symbols
-    latest_per_sym = [ind_all[s].index[-1] for s in active if len(ind_all[s]) > 0]
+    # Determine "today" = most recent date; warn & skip symbols with stale data
+    latest_per_sym = {s: ind_all[s].index[-1] for s in active if len(ind_all[s]) > 0}
     if not latest_per_sym:
         sys.exit("Error: データなし")
-    today = min(latest_per_sym)   # conservative: all symbols must have today's data
+    today = max(latest_per_sym.values())
+    stale = [s for s, d in latest_per_sym.items() if (today - d).days > 7]
+    if stale:
+        print(f"\n  WARNING: {len(stale)}銘柄のデータが7日以上古いため本日判定をスキップ:")
+        for s in stale[:5]:
+            print(f"    [{s}] {NAMES.get(s,s)}: 最新データ {latest_per_sym[s].date()}")
+        if len(stale) > 5:
+            print(f"    ... 他 {len(stale)-5} 銘柄")
 
     # Previous trading day
     ref_idx  = ind_all[active[0]].index
@@ -1121,14 +1246,17 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
     pending   = state.get("pending_orders", {})
     r_trades  = state.setdefault("realized_trades", [])
     total_pnl = float(state.get("total_realized_pnl", 0.0))
-    exec_log  = []
+    exec_log        = []
+    gc_wait         = state.get("gc_wait", {})
+    new_gc_wait     = {}
+    stop_cooldowns  = state.get("stop_cooldowns", {})
 
     new_pending = {}
 
     for sym, order in list(pending.items()):
         o  = price(sym, today, "open")
         pc = price(sym, yesterday, "close")
-        if o is None or pc is None:
+        if o is None or pc is None or np.isnan(o) or np.isnan(pc):
             new_pending[sym] = order   # no data — carry forward
             continue
 
@@ -1167,26 +1295,31 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
                 exec_log.append(f"  [{sym}] PARTIAL SELL 持越し (ストップ安, {dfr+1}回目)")
             else:
                 if sym in positions:
-                    pos     = positions[sym]
-                    sh_all  = int(pos["shares"])
-                    sh_half = (sh_all // 2 // LOT) * LOT
-                    ep_pos  = float(pos["entry_price"])
+                    pos       = positions[sym]
+                    sh_all    = int(pos["shares"])
+                    sh_half   = (sh_all // 2 // LOT) * LOT
+                    ep_pos    = float(pos["entry_price"])
+                    pr_reason = order.get("reason", "partial_profit")
                     if sh_half >= LOT:
                         xproc  = o * sh_half * (1 - COMMISSION)
                         profit = xproc - ep_pos * sh_half * (1 + COMMISSION)
                         cash  += xproc
                         total_pnl += profit
-                        pos["shares"]        = sh_all - sh_half
-                        pos["partial_taken"] = True
-                        pos["stop_price"]    = max(float(pos["stop_price"]), ep_pos)
+                        pos["shares"] = sh_all - sh_half
+                        if pr_reason == "partial_profit":
+                            pos["partial_taken"] = True
+                            pos["stop_price"]    = max(float(pos["stop_price"]), ep_pos)
+                        else:
+                            pos["partial_taken_2"] = True
                         r_trades.append({
                             "date": str(today.date()), "symbol": sym,
                             "shares": sh_half, "action": "partial_sell",
                             "price": round(o, 1), "profit": round(profit, 0),
-                            "reason": "partial_profit",
+                            "reason": pr_reason,
                         })
+                        tier = "1" if pr_reason == "partial_profit" else "2"
                         exec_log.append(f"  [{sym}] {NAMES.get(sym,sym)} PARTIAL SELL {sh_half}株 "
-                                        f"@ ¥{o:,.0f}  P&L ¥{profit:+,.0f}  (部分利確)")
+                                        f"@ ¥{o:,.0f}  P&L ¥{profit:+,.0f}  (部分利確{tier})")
                     else:
                         # 単元未満なら全決済
                         xproc  = o * sh_all * (1 - COMMISSION)
@@ -1225,9 +1358,7 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
                     shares  = calc_position_size(o, atr_val, atr_stop_mult, port_val)
                     if shares >= LOT:
                         cost = shares * o * (1 + COMMISSION)
-                    if shares >= LOT:
-                        cost   = shares * o * (1 + COMMISSION)
-                        if shares >= LOT and cost <= cash:
+                        if cost <= cash:
                             cash -= cost
                             positions[sym] = {
                                 "entry_date":  str(today.date()),
@@ -1252,18 +1383,20 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
                     exec_log.append(f"  [{sym}] BUY スキップ (スロット満杯)")
 
     # ── Update positions at today's close, generate new pending ─────────────
-    n225_sma25 = n225_close.rolling(MARKET_SMA).mean()
-    n225_above = (n225_close > n225_sma25)
-    n225_ok    = bool(n225_above.get(today, True))
-    n225_val   = float(n225_close.get(today, float("nan")))
-    n225_sma_v = float(n225_sma25.get(today, float("nan")))
+    n225_sma25   = n225_close.rolling(MARKET_SMA).mean()
+    n225_sma75   = n225_close.rolling(MARKET_SMA_SLOW).mean()
+    n225_above   = (n225_close > n225_sma25) & (n225_close > n225_sma75)
+    n225_ok      = bool(n225_above.get(today, True))
+    n225_val     = float(n225_close.get(today, float("nan")))
+    n225_sma_v   = float(n225_sma25.get(today, float("nan")))
+    n225_sma75_v = float(n225_sma75.get(today, float("nan")))
 
     today_close = {}
     signal_log  = []
 
     for sym in active:
         c = price(sym, today, "close")
-        if c is None:
+        if c is None or np.isnan(c):
             continue
         today_close[sym] = c
 
@@ -1295,16 +1428,25 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
             unr_pct = (c - ep) / ep if ep > 0 else 0.0
 
             if sym not in new_pending:
-                # 部分利確: ATR×PARTIAL_PROFIT_R 達成で50%売り
+                # 部分利確1: ATR×PARTIAL_PROFIT_R 達成で50%売り
                 if (not pos.get("partial_taken") and atr_e > 0
                         and c >= ep + atr_e * PARTIAL_PROFIT_R):
                     new_pending[sym] = {"action": "partial_sell",
                                         "reason": "partial_profit", "deferred": 0}
                     signal_log.append(
                         f"  [{sym}] {NAMES.get(sym,sym)} → 明日PARTIAL SELL "
-                        f"(部分利確 ATR×{PARTIAL_PROFIT_R:.1f} 含み益{unr_pct*100:.1f}%)")
+                        f"(部分利確1 ATR×{PARTIAL_PROFIT_R:.1f} 含み益{unr_pct*100:.1f}%)")
+                # 部分利確2: ATR×PARTIAL_PROFIT_R2 達成で残りの50%売り
+                elif (pos.get("partial_taken") and not pos.get("partial_taken_2")
+                        and atr_e > 0 and c >= ep + atr_e * PARTIAL_PROFIT_R2):
+                    new_pending[sym] = {"action": "partial_sell",
+                                        "reason": "partial_profit_2", "deferred": 0}
+                    signal_log.append(
+                        f"  [{sym}] {NAMES.get(sym,sym)} → 明日PARTIAL SELL "
+                        f"(部分利確2 ATR×{PARTIAL_PROFIT_R2:.1f} 含み益{unr_pct*100:.1f}%)")
                 elif c <= sp:
                     new_pending[sym] = {"action": "sell", "reason": "stop_loss", "deferred": 0}
+                    stop_cooldowns[sym] = str(today.date())
                     signal_log.append(f"  [{sym}] {NAMES.get(sym,sym)} → 明日SELL (ATR損切 ¥{sp:,.0f})")
                 elif c <= peak * (1 - ts_pct):
                     new_pending[sym] = {"action": "sell", "reason": "trailing_stop", "deferred": 0}
@@ -1318,24 +1460,17 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
                 else:
                     try:
                         row = ind_all[sym].loc[today]
-                        if bool(row.get("rsi_exit", False)):
-                            # ハイブリッド: 含み益<3% OR 保有≤10営業日 の初期フェーズのみ
-                            early_phase = (unr_pct < EARLY_EXIT_PROFIT_CAP or
-                                           days_held <= EARLY_EXIT_DAYS_CAP)
-                            if early_phase:
-                                new_pending[sym] = {"action": "sell", "reason": "early_exit", "deferred": 0}
-                                signal_log.append(
-                                    f"  [{sym}] {NAMES.get(sym,sym)} → 明日SELL "
-                                    f"(RSI連続過熱反転 RSI={float(row['rsi']):.1f} 含み益{unr_pct*100:.1f}%)")
+                        if days_held >= MIN_HOLD_DAYS_SMA and (bool(row["dead_cross"]) or bool(row["below_sma"])):
+                            # 最短保有日数経過後のみ SMA離脱退出
+                            pos["sma_below_days"] = pos.get("sma_below_days", 0) + 1
+                            if pos["sma_below_days"] >= 2:
+                                new_pending[sym] = {"action": "sell", "reason": "signal", "deferred": 0}
+                                signal_log.append(f"  [{sym}] {NAMES.get(sym,sym)} → 明日SELL (DC/SMA割れ 2日確認)")
                             else:
-                                signal_log.append(
-                                    f"  [{sym}] {NAMES.get(sym,sym)} 保有継続 "
-                                    f"(RSI反転だが利益乗り継続 含み益{unr_pct*100:.1f}%)")
-                        elif bool(row["dead_cross"]) or bool(row["below_sma"]):
-                            new_pending[sym] = {"action": "sell", "reason": "signal", "deferred": 0}
-                            signal_log.append(f"  [{sym}] {NAMES.get(sym,sym)} → 明日SELL (DC/SMA割れ)")
+                                signal_log.append(f"  [{sym}] {NAMES.get(sym,sym)} SMA割れ1日目 (様子見)")
                         else:
-                            signal_log.append(f"  [{sym}] {NAMES.get(sym,sym)} 保有継続")
+                            pos["sma_below_days"] = 0
+                            signal_log.append(f"  [{sym}] {NAMES.get(sym,sym)} 保有継続 ({days_held}日目)")
                     except KeyError:
                         signal_log.append(f"  [{sym}] {NAMES.get(sym,sym)} 保有継続 (データなし)")
 
@@ -1345,10 +1480,22 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
                 rsi_v = float(row.get("rsi", float("nan")))
                 adx_v = float(row.get("adx", float("nan")))
                 vr_v  = float(row.get("vol_ratio", float("nan")))
-                rsi_ok = not np.isnan(rsi_v) and rsi_v >= RSI_THRESHOLD
+                rsi_ok = not np.isnan(rsi_v) and RSI_THRESHOLD <= rsi_v <= RSI_MAX
                 adx_ok = not np.isnan(adx_v) and adx_v >= ADX_THRESHOLD
                 vr_ok  = not np.isnan(vr_v)  and vr_v  >= VOLUME_RATIO_MIN
-                if (not pd.isna(row["sma"]) and
+                # GC翌日の再確認（バックテストの gc_wait と対応）
+                if sym in gc_wait:
+                    cd_date  = stop_cooldowns.get(sym)
+                    cd_ok    = (cd_date is None or
+                                (today.date() - pd.Timestamp(cd_date).date()).days >= STOP_COOLDOWN_DAYS)
+                    if (not pd.isna(row["sma"]) and bool(row["above_sma"])
+                            and n225_ok and rsi_ok and cd_ok):
+                        new_pending[sym] = {"action": "buy", "deferred": 0}
+                        signal_log.append(
+                            f"  [{sym}] {NAMES.get(sym,sym)} → 明日BUY "
+                            f"(GC翌日確認OK RSI={rsi_v:.1f} ADX={adx_v:.1f})")
+                    # gc_wait はいずれにせよクリア（1回のみ確認）
+                elif (not pd.isna(row["sma"]) and
                         bool(row["above_sma"]) and bool(row["golden_cross"])):
                     # 相対強度フィルター
                     rs_ok = True
@@ -1365,27 +1512,35 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
                             rs_ok = (c_now_rs / c_ago_rs) / (n_now_rs / n_ago_rs) >= 1.0
                     except Exception:
                         rs_ok = True
-                    # 決算スキップフィルター（yfinance calendar）
+                    # 決算スキップフィルター（日本株のみ）
                     earnings_ok = True
-                    try:
-                        cal = yf.Ticker(f"{sym}.T").calendar
-                        if isinstance(cal, dict) and "Earnings Date" in cal:
-                            earn_dates = cal["Earnings Date"]
-                            if earn_dates:
-                                earn_dt   = pd.Timestamp(earn_dates[0]).date()
-                                days_diff = (earn_dt - today.date()).days
-                                if -3 <= days_diff <= 5:
-                                    earnings_ok = False
-                                    signal_log.append(
-                                        f"  [{sym}] {NAMES.get(sym,sym)} "
-                                        f"【決算スキップ】{earn_dt}（あと{days_diff}日）")
-                    except Exception:
-                        pass
-                    if n225_ok and rsi_ok and adx_ok and vr_ok and rs_ok and earnings_ok:
-                        new_pending[sym] = {"action": "buy", "deferred": 0}
+                    if UNIVERSE == "jp":
+                        try:
+                            cal = yf.Ticker(f"{sym}.T").calendar
+                            if isinstance(cal, dict) and "Earnings Date" in cal:
+                                earn_dates = cal["Earnings Date"]
+                                if earn_dates:
+                                    earn_dt   = pd.Timestamp(earn_dates[0]).date()
+                                    days_diff = (earn_dt - today.date()).days
+                                    if -3 <= days_diff <= 5:
+                                        earnings_ok = False
+                                        signal_log.append(
+                                            f"  [{sym}] {NAMES.get(sym,sym)} "
+                                            f"【決算スキップ】{earn_dt}（あと{days_diff}日）")
+                        except Exception:
+                            pass
+                    cd_date  = stop_cooldowns.get(sym)
+                    cd_ok    = (cd_date is None or
+                                (today.date() - pd.Timestamp(cd_date).date()).days >= STOP_COOLDOWN_DAYS)
+                    if n225_ok and rsi_ok and adx_ok and vr_ok and rs_ok and earnings_ok and cd_ok:
+                        new_gc_wait[sym] = 1
                         signal_log.append(
-                            f"  [{sym}] {NAMES.get(sym,sym)} → 明日BUY "
-                            f"(GC+SMA上+RS OK RSI={rsi_v:.1f} ADX={adx_v:.1f})")
+                            f"  [{sym}] {NAMES.get(sym,sym)} GC検出→翌日確認待ち "
+                            f"(RSI={rsi_v:.1f} ADX={adx_v:.1f})")
+                    elif not cd_ok:
+                        signal_log.append(
+                            f"  [{sym}] {NAMES.get(sym,sym)} "
+                            f"【スキップ】stop_loss後クールダウン中 ({cd_date})")
                     elif not n225_ok:
                         signal_log.append(
                             f"  [{sym}] {NAMES.get(sym,sym)} "
@@ -1401,6 +1556,20 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
             except KeyError:
                 pass
 
+    # ── 信用取引金利コスト（日次控除）────────────────────────────────────────
+    if LEVERAGE_FACTOR > 1.0 and positions:
+        borrowed = sum(
+            int(positions[s]["shares"])
+            * today_close.get(s, float(positions[s]["entry_price"]))
+            * (LEVERAGE_FACTOR - 1.0) / LEVERAGE_FACTOR
+            for s in positions
+        )
+        daily_interest = borrowed * (MARGIN_RATE / 365.0)
+        cash -= daily_interest
+        signal_log.append(
+            f"  [金利] 信用金利控除 ¥{daily_interest:,.0f}"
+            f"  (借入評価額 ¥{borrowed:,.0f} × {MARGIN_RATE*100:.1f}%/365)")
+
     # ── Compute portfolio summary ───────────────────────────────────────────
     positions_val = sum(
         int(positions[s]["shares"]) * today_close.get(s, float(positions[s]["entry_price"]))
@@ -1412,6 +1581,8 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
     state["cash"]               = round(cash, 0)
     state["positions"]          = positions
     state["pending_orders"]     = new_pending
+    state["gc_wait"]            = new_gc_wait
+    state["stop_cooldowns"]     = stop_cooldowns
     state["realized_trades"]    = r_trades[-100:]
     state["total_realized_pnl"] = round(total_pnl, 0)
     state["last_updated"]       = str(today.date())
@@ -1474,7 +1645,7 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
             slot_cap = pv / MAX_SLOTS
             lots = min(
                 int(pv * RISK_PER_TRADE / sld / LOT) if sld > 0 else 0,
-                int(slot_cap / (ep * (1 + COMMISSION)) / LOT),
+                int(slot_cap / (ep * (1 + COMMISSION)) / LOT) if ep > 0 else 0,
             )
             sh   = lots * LOT
             cost = sh * ep * (1 + COMMISSION)
@@ -1497,12 +1668,15 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
         print(f"    なし (全銘柄 様子見)")
 
     # Market filter
-    n225_status = f"¥{n225_val:,.0f}" if not np.isnan(n225_val) else "N/A"
-    sma_status  = f"¥{n225_sma_v:,.0f}" if not np.isnan(n225_sma_v) else "N/A"
-    mkt_label   = "▲ 地合い良好 (買い許可)" if n225_ok else "▼ 地合い悪化 (買い全スキップ)"
+    n225_status  = f"¥{n225_val:,.0f}" if not np.isnan(n225_val) else "N/A"
+    sma25_status = f"¥{n225_sma_v:,.0f}" if not np.isnan(n225_sma_v) else "N/A"
+    sma75_status = f"¥{n225_sma75_v:,.0f}" if not np.isnan(n225_sma75_v) else "N/A"
+    mkt_label    = "▲ 地合い良好 (買い許可)" if n225_ok else "▼ 地合い悪化 (買い全スキップ)"
+    mkt_name     = "S&P500" if UNIVERSE == "us" else "日経平均"
+    idx_label    = "SPX" if UNIVERSE == "us" else "N225"
     print(f"\n{'─'*W}")
-    print(f"  ◆ 日経平均 地合い判定")
-    print(f"    N225終値: {n225_status}  SMA{MARKET_SMA}: {sma_status}  → {mkt_label}")
+    print(f"  ◆ {mkt_name} 地合い判定  (SMA{MARKET_SMA} & SMA{MARKET_SMA_SLOW} 両方超え)")
+    print(f"    {idx_label}: {n225_status}  SMA{MARKET_SMA}: {sma25_status}  SMA{MARKET_SMA_SLOW}: {sma75_status}  → {mkt_label}")
 
     # Today's processing log
     if exec_log or signal_log:
@@ -1530,43 +1704,271 @@ def run_auto(df_all: dict, n225_close: pd.Series) -> None:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Walk-Forward Optimization
+# ══════════════════════════════════════════════════════════════════════════════
+def run_walk_forward(df_all: dict, n225_close: pd.Series,
+                     test_window: int = 252,
+                     min_train_days: int = 500,
+                     min_history: int = 0) -> None:
+    """
+    ウォークフォワード最適化: 訓練窓を拡張しながら毎年再最適化し、
+    各期間のアウトオブサンプル成績を結合した「未来に近い」エクイティを算出。
+    """
+    active = [s for s in SYMBOLS if s in df_all]
+    if min_history > 0:
+        active = [s for s in active if len(df_all[s]) >= min_history]
+    if len(active) < 2:
+        sys.exit("Error: データ不足（--min-history を緩和してください）")
+
+    ind_ref    = {s: build_indicators(df_all[s], 25) for s in active}
+    common_idx = reduce(lambda a, b: a.intersection(b),
+                        [ind_ref[s].index for s in active]).sort_values()
+    n = len(common_idx)
+
+    # 訓練拡張型ウォークフォワード期間生成
+    periods, pos = [], min_train_days
+    while pos < n:
+        train_idx = common_idx[:pos]
+        test_end  = min(pos + test_window, n)
+        test_idx  = common_idx[pos:test_end]
+        if len(test_idx) >= 20:
+            periods.append((train_idx, test_idx))
+        pos += test_window
+
+    if not periods:
+        sys.exit("Error: ウォークフォワード期間を生成できません")
+
+    print(f"\n  共通取引日: {common_idx[0].date()} ～ {common_idx[-1].date()}  ({n}日)")
+    print(f"  ウォークフォワード: {len(periods)} 期間  "
+          f"(訓練最小 {min_train_days}日 / テスト窓 {test_window}日/年)\n")
+    for i, (tr, te) in enumerate(periods, 1):
+        print(f"  期間{i:2d}: 訓練 {tr[0].date()}〜{tr[-1].date()} ({len(tr):4d}日) "
+              f"| テスト {te[0].date()}〜{te[-1].date()} ({len(te):3d}日)")
+
+    # インジケータを一括計算（全期間共通）
+    print(f"\n  インジケータ一括計算中 ...")
+    all_ind_full = {
+        (sma, atr_p): {s: build_indicators(df_all[s], sma, atr_p).reindex(common_idx)
+                       for s in active}
+        for sma in SMA_PERIODS for atr_p in ATR_PERIODS
+    }
+    n_combos = len(SMA_PERIODS) * len(ATR_STOP_MULTS) * len(TRAILING_RATES) * len(ATR_PERIODS)
+
+    period_results, all_test_assets = [], []
+
+    for pidx, (train_idx, test_idx) in enumerate(periods):
+        n_yrs_tr  = len(train_idx) / 252
+        mkt_train = build_market_filter_arr(n225_close, train_idx)
+        mkt_test  = build_market_filter_arr(n225_close, test_idx)
+        n225_tr   = n225_close.reindex(train_idx).ffill().bfill().fillna(0).values.astype(float)
+        n225_te   = n225_close.reindex(test_idx).ffill().bfill().fillna(0).values.astype(float)
+
+        print(f"\n  {'─'*68}")
+        print(f"  期間{pidx+1}/{len(periods)}  訓練〜{train_idx[-1].date()}  "
+              f"テスト {test_idx[0].date()}〜{test_idx[-1].date()}  "
+              f"({n_combos}組合せ グリッドサーチ中...)")
+
+        best_calmar, best_params = -float("inf"), None
+        for sma, atr_m, ts, atr_p in product(SMA_PERIODS, ATR_STOP_MULTS,
+                                               TRAILING_RATES, ATR_PERIODS):
+            ind_tr = {s: all_ind_full[(sma, atr_p)][s].reindex(train_idx) for s in active}
+            r = portfolio_backtest(ind_tr, atr_m, ts, mkt_train, train_idx,
+                                   n225_arr=n225_tr)
+            ann = r["total_return"] / n_yrs_tr
+            mdd = abs(r["max_drawdown"])
+            calmar = ann / mdd if (mdd > 0 and r["total_trades"] >= 5
+                                   and r["total_return"] > 0) else -float("inf")
+            if calmar > best_calmar:
+                best_calmar, best_params = calmar, (sma, atr_m, ts, atr_p)
+
+        bs, ba, bt, bp = best_params
+        ind_te = {s: all_ind_full[(bs, bp)][s].reindex(test_idx) for s in active}
+        result = portfolio_backtest(ind_te, ba, bt, mkt_test, test_idx,
+                                    n225_arr=n225_te, enable_shorts=False)
+
+        period_results.append({
+            "period":      pidx + 1,
+            "train_start": train_idx[0].date(),
+            "train_end":   train_idx[-1].date(),
+            "test_start":  test_idx[0].date(),
+            "test_end":    test_idx[-1].date(),
+            "params":      best_params,
+            "tr_calmar":   best_calmar,
+            "te_return":   result["total_return"],
+            "te_maxdd":    result["max_drawdown"],
+            "te_trades":   result["total_trades"],
+            "te_winrate":  result["win_rate"],
+            "asset_series": result["asset_series"],
+        })
+        all_test_assets.append(result["asset_series"])
+
+        print(f"  → 最適: SMA={bs} ATR×{ba:.1f} TS={bt*100:.0f}% ATRp={bp}日 "
+              f"| テスト {result['total_return']:+.1f}% "
+              f"DD{result['max_drawdown']:.1f}% {result['total_trades']}件")
+
+    # エクイティカーブを連結（前期の最終資産 → 次期の初期資産）
+    current = float(INITIAL_CAPITAL)
+    parts   = []
+    for asset in all_test_assets:
+        scale  = current / INITIAL_CAPITAL
+        scaled = asset * scale
+        parts.append(scaled)
+        current = float(scaled.iloc[-1])
+    combined = pd.concat(parts)
+
+    n_yrs   = len(combined) / 252
+    ann_ret = ((combined.iloc[-1] / INITIAL_CAPITAL) ** (1 / n_yrs) - 1) * 100
+    rm      = combined.cummax()
+    maxdd   = float(((combined - rm) / rm * 100).min())
+    calmar  = ann_ret / abs(maxdd) if maxdd < 0 else 0.0
+
+    # サマリー表示
+    print(f"\n{'═'*74}")
+    print(f"  ウォークフォワード 総合結果  ({len(periods)}期間 / {len(combined)}日)")
+    print(f"{'─'*74}")
+    print(f"  期  訓練終了    テスト期間                 最適パラメータ           テスト")
+    print(f"  {'─'*2}  {'─'*10}  {'─'*23}  {'─'*24}  {'─'*7}")
+    for r in period_results:
+        s, a, t, p = r["params"]
+        ps = f"S{s} A{a:.1f}x T{t*100:.0f}% P{p}d"
+        print(f"   {r['period']:>2}  {str(r['train_end'])[:10]}  "
+              f"{str(r['test_start'])[:10]}〜{str(r['test_end'])[:10]}  "
+              f"{ps:<24}  {r['te_return']:>+6.1f}%")
+    print(f"{'─'*74}")
+    print(f"  累積リターン  : {(combined.iloc[-1]/INITIAL_CAPITAL-1)*100:+.1f}%")
+    print(f"  年率リターン  : {ann_ret:+.1f}%  ※ホールドアウト法との差が過学習の指標")
+    print(f"  最大DD        : {maxdd:.1f}%")
+    print(f"  Calmar比率    : {calmar:.2f}")
+    print(f"{'═'*74}\n")
+
+    # グラフ
+    os.makedirs("output", exist_ok=True)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(13, 8),
+                                    gridspec_kw={"height_ratios": [3, 1]})
+    plot_dates = combined.index.tz_convert(None) if combined.index.tz else combined.index
+    ax1.plot(plot_dates, combined.values, color="steelblue", lw=1.5, label="Portfolio (WF)")
+    ax1.axhline(INITIAL_CAPITAL, color="dimgray", ls="--", lw=0.9)
+    ax1.fill_between(plot_dates, combined.values, INITIAL_CAPITAL,
+                     where=combined.values >= INITIAL_CAPITAL, alpha=0.2, color="green")
+    ax1.fill_between(plot_dates, combined.values, INITIAL_CAPITAL,
+                     where=combined.values < INITIAL_CAPITAL, alpha=0.2, color="red")
+    for r in period_results[:-1]:
+        sep = pd.Timestamp(r["test_end"])
+        sep_n = sep.tz_localize(None) if sep.tzinfo is None else sep.tz_convert(None)
+        ax1.axvline(sep_n, color="orange", ls=":", lw=0.8, alpha=0.7)
+    ax1.set_title(
+        f"J-Titan Walk-Forward  "
+        f"AnnRet={ann_ret:+.1f}% | MaxDD={maxdd:.1f}% | Calmar={calmar:.2f}",
+        fontsize=10)
+    ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"Y{x:,.0f}"))
+    ax1.legend(fontsize=9)
+    ax1.grid(True, alpha=0.3)
+    dd_s = (combined - combined.cummax()) / combined.cummax() * 100
+    ax2.fill_between(plot_dates, dd_s.values, 0, alpha=0.5, color="red")
+    ax2.plot(plot_dates, dd_s.values, color="darkred", lw=0.8)
+    ax2.set_ylabel("Drawdown (%)")
+    ax2.grid(True, alpha=0.3)
+    ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.1f}%"))
+    for ax in (ax1, ax2):
+        ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+        plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
+    ax2.set_xlabel("Date")
+    plt.tight_layout()
+    plt.savefig("output/j_titan_walk_forward.png", dpi=150)
+    print(f"  グラフ保存 → output/j_titan_walk_forward.png\n")
+
+    # 最新期間の最適パラメータを portfolio.json に保存
+    latest  = period_results[-1]
+    s, a, t, p = latest["params"]
+    state = load_portfolio()
+    state["params"] = {
+        "sma": s, "atr_stop_mult": a, "trailing": t, "atr_period": p,
+        "source": (f"walk-forward optimised "
+                   f"{latest['test_start']}~{latest['test_end']}"),
+    }
+    save_portfolio(state)
+    print(f"  最新期間パラメータを {PORTFOLIO_PATH} に保存\n")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Main Entry Point
 # ══════════════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="J-Titan Engine v2")
-    ap.add_argument("--mode", choices=["backtest", "auto"], default="backtest",
-                    help="backtest (最適化+テスト) / auto (毎日の自動ペーパートレード)")
+    ap.add_argument("--mode", choices=["backtest", "auto", "walkforward"],
+                    default="backtest",
+                    help="backtest / auto / walkforward")
+    ap.add_argument("--universe", choices=["jp", "us"], default="jp",
+                    help="トレードユニバース: jp=日本株(道A) / us=米国株(道B)")
     ap.add_argument("--test-days", type=int, default=TEST_DAYS,
-                    help=f"テスト期間の営業日数 (デフォルト: {TEST_DAYS})")
+                    help=f"バックテストのテスト期間日数 (デフォルト: {TEST_DAYS})")
+    ap.add_argument("--wf-test-window", type=int, default=252,
+                    help="ウォークフォワードのテスト窓 (デフォルト: 252日=1年)")
+    ap.add_argument("--wf-min-train", type=int, default=500,
+                    help="ウォークフォワードの最小訓練日数 (デフォルト: 500日)")
     ap.add_argument("--min-history", type=int, default=800,
                     help="最小データ日数（未満の銘柄を除外）")
     args = ap.parse_args()
 
+    # ── US ユニバース設定（グローバル上書き）────────────────────────────────
+    if args.universe == "us":
+        UNIVERSE       = "us"
+        SYMBOLS        = US_SYMBOLS
+        NAMES          = US_NAMES
+        RSI_THRESHOLD  = US_RSI_THRESHOLD
+        RSI_MAX        = US_RSI_MAX
+        ADX_THRESHOLD  = US_ADX_THRESHOLD
+        PORTFOLIO_PATH = "portfolio_us.json"
+
+    universe_label = "US 米国株 (道B)" if args.universe == "us" else "JP 日本株 (道A)"
     print(f"\n{'═'*68}")
-    print(f"  J-Titan Engine v2  —  Japanese Swing Trade AI [決定版]")
+    print(f"  J-Titan Engine v2  —  [{universe_label}]")
     print(f"  Mode: {args.mode.upper()}  |  {datetime.now(TOKYO_TZ).strftime('%Y-%m-%d %H:%M')}")
     print(f"{'═'*68}")
 
-    # Load data — auto: refresh latest; backtest: load CSV or fetch if missing
-    loader = load_and_refresh if args.mode == "auto" else load_or_fetch
     print("\n  データ読み込み中 ...")
     df_all = {}
-    for sym in SYMBOLS:
-        df = loader(sym)
-        if df is not None and len(df) > 0:
-            df_all[sym] = df
-            suffix = " (最新データ取得済)" if args.mode == "auto" else ""
-            print(f"    [{sym}] {NAMES[sym]:<16}: {len(df)} 取引日{suffix}")
-        else:
-            print(f"    [{sym}] {NAMES[sym]:<16}: ファイルなし — スキップ")
 
-    n225_df    = loader("N225")
-    n225_close = load_n225_series(n225_df)
-    print(f"    [N225] 日経平均          : {len(n225_close)} 取引日  "
-          f"(地合いフィルター SMA{MARKET_SMA} 有効)")
+    if args.universe == "us":
+        for sym in SYMBOLS:
+            df = load_and_refresh_us(sym)
+            if df is not None and len(df) > 0:
+                df_all[sym] = df
+                print(f"    [{sym}] {NAMES[sym]:<16}: {len(df)} 取引日 (更新済)")
+            else:
+                print(f"    [{sym}] {NAMES[sym]:<16}: データなし — スキップ")
+        market_close = load_and_refresh_spx()
+        print(f"    [SPX] S&P500           : {len(market_close)} 取引日  "
+              f"(地合いフィルター SMA{MARKET_SMA} 有効)")
+    else:
+        loader = load_and_refresh if args.mode == "auto" else load_or_fetch
+        for sym in SYMBOLS:
+            df = loader(sym)
+            if df is not None and len(df) > 0:
+                df_all[sym] = df
+                suffix = " (最新データ取得済)" if args.mode == "auto" else ""
+                print(f"    [{sym}] {NAMES[sym]:<16}: {len(df)} 取引日{suffix}")
+            else:
+                print(f"    [{sym}] {NAMES[sym]:<16}: ファイルなし — スキップ")
+        n225_df      = loader("N225")
+        market_close = load_n225_series(n225_df)
+        print(f"    [N225] 日経平均          : {len(market_close)} 取引日  "
+              f"(地合いフィルター SMA{MARKET_SMA} 有効)")
 
     if args.mode == "backtest":
-        run_backtest(df_all, n225_close,
-                     test_days=args.test_days, min_history=args.min_history)
+        if args.universe == "us":
+            print("  US バックテストは compare_strategies.py を使用してください")
+        else:
+            run_backtest(df_all, market_close,
+                         test_days=args.test_days, min_history=args.min_history)
+    elif args.mode == "walkforward":
+        if args.universe == "us":
+            print("  US ウォークフォワードは compare_strategies.py を使用してください")
+        else:
+            run_walk_forward(df_all, market_close,
+                             test_window=args.wf_test_window,
+                             min_train_days=args.wf_min_train,
+                             min_history=args.min_history)
     else:
-        run_auto(df_all, n225_close)
+        run_auto(df_all, market_close)

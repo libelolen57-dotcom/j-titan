@@ -26,8 +26,11 @@ jobs:
       - name: Install dependencies
         run: pip install yfinance pandas numpy matplotlib pytz xlrd openpyxl
 
-      - name: Run daily paper trade (auto mode)
-        run: python j_titan_engine.py --mode auto
+      - name: Run daily paper trade JP (道A - 日本株)
+        run: python j_titan_engine.py --mode auto --universe jp
+
+      - name: Run daily paper trade US (道B - 米国株)
+        run: python j_titan_engine.py --mode auto --universe us
 
       - name: Run signal screener and save results
         run: |
@@ -47,7 +50,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add portfolio.json data/ output/ index.html
+          git add portfolio.json portfolio_us.json data/ output/ index.html
           if git diff --staged --quiet; then
             echo "変化なし — コミットをスキップします"
           else
@@ -85,21 +88,32 @@ jobs:
                   if m3:
                       signals.append(f"{m3.group(1)} {m3.group(2)} ¥{m3.group(3)} RSI:{m3.group(4)}")
 
-          pf = json.load(open("portfolio.json"))
-          cash = f'{pf["cash"]:,.0f}'
-          pnl = pf.get("total_realized_pnl", 0)
-          pnl_str = f'+{pnl:,.0f}' if pnl >= 0 else f'{pnl:,.0f}'
-          pos_count = len(pf.get("positions", {}))
+          def pf_summary(path, label):
+              if not os.path.exists(path):
+                  return f"{label}: データなし"
+              pf = json.load(open(path))
+              cash = pf.get("cash", 0)
+              pnl  = pf.get("total_realized_pnl", 0)
+              pos  = len(pf.get("positions", {}))
+              pnl_s = f'+{pnl:,.0f}' if pnl >= 0 else f'{pnl:,.0f}'
+              total = cash + sum(
+                  float(v.get("shares",0)) * float(v.get("peak_close", v.get("entry_price",0)))
+                  for v in pf.get("positions", {}).values()
+              )
+              return f"{label}: 総資産¥{total:,.0f} 保有{pos}件 損益{pnl_s}円"
+
+          jp_line = pf_summary("portfolio.json",    "道A(JP)")
+          us_line = pf_summary("portfolio_us.json", "道B(US)")
 
           if buy_count > 0:
               codes = "\n".join(signals[:5])
               msg = (f"[J-Titan] シグナル発生 {date_str}\n\n"
                      f"買いシグナル: {buy_count}銘柄\n{codes}\n{market_status}\n\n"
-                     f"現金: {cash}円\n保有: {pos_count}件\n確定損益: {pnl_str}円")
+                     f"{jp_line}\n{us_line}")
           else:
               msg = (f"[J-Titan] 日次レポート {date_str}\n\n"
                      f"シグナルなし\n{market_status}\n\n"
-                     f"現金: {cash}円\n保有: {pos_count}件\n確定損益: {pnl_str}円")
+                     f"{jp_line}\n{us_line}")
 
           import json as _json
           payload = _json.dumps({"chat_id": int(chat_id), "text": msg}).encode("utf-8")

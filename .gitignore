@@ -17,6 +17,10 @@
 
 # 資産ログ・パラメータ（自動保存対象）
 !portfolio.json
+!portfolio_us.json
+
+# 戦略比較スクリプト
+!compare_strategies.py
 
 # 株価データ（GitHub Actions が参照）
 !data
