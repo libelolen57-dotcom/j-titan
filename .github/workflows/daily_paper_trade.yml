@@ -56,7 +56,6 @@ jobs:
           fi
 
       - name: Send Telegram notification
-        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -66,8 +65,11 @@ jobs:
           from datetime import datetime
           import pytz
 
-          token = os.environ["TELEGRAM_BOT_TOKEN"]
-          chat_id = os.environ["TELEGRAM_CHAT_ID"]
+          token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+          chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+          if not token or not chat_id:
+              print("Telegram未設定、スキップ")
+              exit(0)
           date_str = datetime.now(pytz.timezone("Asia/Tokyo")).strftime("%Y-%m-%d")
           signal_file = f"output/signals_{date_str}.txt"
 
