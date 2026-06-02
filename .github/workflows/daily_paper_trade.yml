@@ -101,7 +101,13 @@ jobs:
                      f"シグナルなし\n{market_status}\n\n"
                      f"現金: {cash}円\n保有: {pos_count}件\n確定損益: {pnl_str}円")
 
-          data = urllib.parse.urlencode({"chat_id": chat_id, "text": msg}).encode()
-          urllib.request.urlopen(f"https://api.telegram.org/bot{token}/sendMessage", data)
+          import json as _json
+          payload = _json.dumps({"chat_id": int(chat_id), "text": msg}).encode("utf-8")
+          req = urllib.request.Request(
+              f"https://api.telegram.org/bot{token}/sendMessage",
+              data=payload,
+              headers={"Content-Type": "application/json"},
+          )
+          urllib.request.urlopen(req)
           print("Telegram通知送信完了")
           PYEOF
