@@ -102,12 +102,18 @@ jobs:
                      f"現金: {cash}円\n保有: {pos_count}件\n確定損益: {pnl_str}円")
 
           import json as _json
+          print(f"DEBUG chat_id={repr(chat_id)} token_prefix={token[:10]}...")
           payload = _json.dumps({"chat_id": int(chat_id), "text": msg}).encode("utf-8")
           req = urllib.request.Request(
               f"https://api.telegram.org/bot{token}/sendMessage",
               data=payload,
               headers={"Content-Type": "application/json"},
           )
-          urllib.request.urlopen(req)
-          print("Telegram通知送信完了")
+          try:
+              urllib.request.urlopen(req)
+              print("Telegram通知送信完了")
+          except urllib.error.HTTPError as e:
+              print(f"Telegram Error {e.code}: {e.read().decode()}")
+          except Exception as e:
+              print(f"Telegram送信失敗: {e}")
           PYEOF
