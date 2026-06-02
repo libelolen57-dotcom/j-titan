@@ -26,6 +26,9 @@
 !output
 !output/**
 
+# GitHub Pages ダッシュボード
+!index.html
+
 # ── Python キャッシュ（data/ output/ 内でも除外） ─────────────────
 __pycache__/
 *.pyc

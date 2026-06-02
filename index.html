@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J-Titan Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 1.2rem; font-weight: 700; color: #58a6ff; margin-bottom: 4px; }
+    .subtitle { font-size: 0.75rem; color: #8b949e; margin-bottom: 20px; }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #8b949e;
+      margin-bottom: 10px;
+    }
+    .big-number { font-size: 1.8rem; font-weight: 700; color: #e6edf3; }
+    .pnl-pos { color: #3fb950; }
+    .pnl-neg { color: #f85149; }
+    .pnl-zero { color: #8b949e; }
+    .stat-row { display: flex; justify-content: space-between; margin-top: 6px; }
+    .stat-label { font-size: 0.78rem; color: #8b949e; }
+    .stat-value { font-size: 0.78rem; font-weight: 600; }
+    .signal-item {
+      background: #0d2e1a;
+      border: 1px solid #238636;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    .signal-code { font-size: 1rem; font-weight: 700; color: #3fb950; }
+    .signal-name { font-size: 0.85rem; color: #e6edf3; margin-bottom: 6px; }
+    .signal-metrics { display: flex; gap: 12px; flex-wrap: wrap; }
+    .metric { font-size: 0.72rem; color: #8b949e; }
+    .metric span { color: #e6edf3; font-weight: 600; }
+    .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 99px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .badge-bull { background: #0d2e1a; color: #3fb950; border: 1px solid #238636; }
+    .badge-bear { background: #2d0d0d; color: #f85149; border: 1px solid #da3633; }
+    .badge-neutral { background: #161b22; color: #8b949e; border: 1px solid #30363d; }
+    .position-item {
+      border-bottom: 1px solid #21262d;
+      padding: 8px 0;
+    }
+    .position-item:last-child { border-bottom: none; }
+    .pos-top { display: flex; justify-content: space-between; align-items: center; }
+    .pos-code { font-size: 0.9rem; font-weight: 700; }
+    .pos-pnl { font-size: 0.9rem; font-weight: 700; }
+    .pos-detail { font-size: 0.72rem; color: #8b949e; margin-top: 2px; }
+    .empty { color: #8b949e; font-size: 0.82rem; text-align: center; padding: 16px 0; }
+    .updated { font-size: 0.68rem; color: #8b949e; text-align: right; margin-top: 4px; }
+    .nikkei-row { display: flex; align-items: center; gap: 8px; }
+    .nikkei-price { font-size: 1.5rem; font-weight: 700; }
+    .signals-raw {
+      font-size: 0.72rem;
+      color: #8b949e;
+      white-space: pre-wrap;
+      font-family: monospace;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #0d1117;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #21262d;
+    }
+    .refresh-btn {
+      display: block;
+      width: 100%;
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      font-size: 0.82rem;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .refresh-btn:active { background: #30363d; }
+    .loading { color: #8b949e; font-size: 0.82rem; }
+    .error { color: #f85149; font-size: 0.78rem; }
+  </style>
+</head>
+<body>
+
+<h1>J-Titan Dashboard</h1>
+<div class="subtitle" id="last-fetch">読み込み中...</div>
+
+<button class="refresh-btn" onclick="loadAll()">↻ 更新</button>
+
+<!-- 相場状況 -->
+<div class="card" id="card-market">
+  <div class="card-title">相場状況</div>
+  <div class="loading">読み込み中...</div>
+</div>
+
+<!-- 今日のシグナル -->
+<div class="card" id="card-signals">
+  <div class="card-title">今日のシグナル</div>
+  <div class="loading">読み込み中...</div>
+</div>
+
+<!-- ポートフォリオ -->
+<div class="card" id="card-portfolio">
+  <div class="card-title">ポートフォリオ</div>
+  <div class="loading">読み込み中...</div>
+</div>
+
+<!-- 保有ポジション -->
+<div class="card" id="card-positions">
+  <div class="card-title">保有ポジション</div>
+  <div class="loading">読み込み中...</div>
+</div>
+
+<script>
+const REPO = "libelolen57-dotcom/j-titan";
+const RAW = `https://raw.githubusercontent.com/${REPO}/main`;
+
+function fmt(n) {
+  return n >= 0
+    ? `+¥${n.toLocaleString('ja-JP', {maximumFractionDigits: 0})}`
+    : `-¥${Math.abs(n).toLocaleString('ja-JP', {maximumFractionDigits: 0})}`;
+}
+function fmtY(n) {
+  return `¥${n.toLocaleString('ja-JP', {maximumFractionDigits: 0})}`;
+}
+function pnlClass(n) {
+  if (n > 0) return 'pnl-pos';
+  if (n < 0) return 'pnl-neg';
+  return 'pnl-zero';
+}
+
+async function loadPortfolio() {
+  const res = await fetch(`${RAW}/portfolio.json?_=${Date.now()}`);
+  if (!res.ok) throw new Error("portfolio.json 取得失敗");
+  return res.json();
+}
+
+async function loadSignals() {
+  const res = await fetch(`${RAW}/output/latest_signals.txt?_=${Date.now()}`);
+  if (!res.ok) throw new Error("latest_signals.txt 取得失敗");
+  return res.text();
+}
+
+function parseSignals(text) {
+  const signals = [];
+  const lines = text.split('\n');
+
+  // 地合い判定
+  let market = null;
+  for (const line of lines) {
+    const m = line.match(/日経平均.*?[¥￥]([\d,]+).*?SMA\d+.*?[¥￥]([\d,]+)/);
+    if (m) {
+      const nikkei = parseInt(m[1].replace(/,/g, ''));
+      const sma = parseInt(m[2].replace(/,/g, ''));
+      const bull = line.includes('良好') || line.includes('買い許可');
+      market = { nikkei, sma, bull };
+    }
+  }
+
+  // シグナル行パース
+  let inBuySection = false;
+  for (const line of lines) {
+    if (line.includes('買いシグナル確定')) { inBuySection = true; continue; }
+    if (line.includes('────') && inBuySection) { inBuySection = false; continue; }
+    if (inBuySection) {
+      // コード 銘柄名 終値 RSI ADX 出来高比 スコア
+      const m = line.match(/^\s*(\d{4})\s+(.+?)\s+[¥￥]\s*([\d,]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)x\s+([\d.]+)/);
+      if (m) {
+        signals.push({
+          code: m[1].trim(),
+          name: m[2].trim(),
+          price: parseInt(m[3].replace(/,/g, '')),
+          rsi: parseFloat(m[4]),
+          adx: parseFloat(m[5]),
+          vol: parseFloat(m[6]),
+          score: parseFloat(m[7]),
+        });
+      }
+    }
+  }
+
+  // スキャン日時
+  let scanDate = null;
+  for (const line of lines) {
+    const m = line.match(/J-Titan シグナルスクリーナー\s+(\d{4}-\d{2}-\d{2} \d{2}:\d{2})/);
+    if (m) scanDate = m[1];
+  }
+
+  return { signals, market, scanDate };
+}
+
+function renderMarket(parsed) {
+  const el = document.getElementById('card-market');
+  if (!parsed.market) {
+    el.innerHTML = `<div class="card-title">相場状況</div><div class="empty">データなし</div>`;
+    return;
+  }
+  const { nikkei, sma, bull } = parsed.market;
+  const badge = bull
+    ? `<span class="badge badge-bull">買い許可</span>`
+    : `<span class="badge badge-bear">買い停止</span>`;
+  el.innerHTML = `
+    <div class="card-title">相場状況 ${badge}</div>
+    <div class="nikkei-row">
+      <div class="nikkei-price">${fmtY(nikkei)}</div>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">SMA25</span>
+      <span class="stat-value">${fmtY(sma)}</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">乖離率</span>
+      <span class="stat-value ${bull ? 'pnl-pos' : 'pnl-neg'}">${((nikkei/sma - 1)*100).toFixed(1)}%</span>
+    </div>
+    ${parsed.scanDate ? `<div class="updated">スキャン: ${parsed.scanDate}</div>` : ''}
+  `;
+}
+
+function renderSignals(parsed) {
+  const el = document.getElementById('card-signals');
+  const { signals } = parsed;
+  if (signals.length === 0) {
+    el.innerHTML = `<div class="card-title">今日のシグナル</div><div class="empty">シグナルなし</div>`;
+    return;
+  }
+  const items = signals.map(s => `
+    <div class="signal-item">
+      <div class="signal-code">${s.code} <span style="font-size:0.8rem;color:#e6edf3;font-weight:400">${s.name}</span></div>
+      <div class="signal-metrics" style="margin-top:6px">
+        <div class="metric">株価 <span>${fmtY(s.price)}</span></div>
+        <div class="metric">RSI <span>${s.rsi}</span></div>
+        <div class="metric">ADX <span>${s.adx}</span></div>
+        <div class="metric">出来高 <span>${s.vol}x</span></div>
+        <div class="metric">スコア <span>${s.score}</span></div>
+      </div>
+    </div>
+  `).join('');
+  el.innerHTML = `<div class="card-title">今日のシグナル（${signals.length}銘柄）</div>${items}`;
+}
+
+function renderPortfolio(pf) {
+  const el = document.getElementById('card-portfolio');
+  const total = pf.cash + Object.values(pf.positions || {}).reduce((s, p) => {
+    return s + (p.quantity || 0) * (p.current_price || p.entry_price || 0);
+  }, 0);
+  const pnl = pf.total_realized_pnl || 0;
+  const pnlPct = (pnl / 1000000 * 100).toFixed(2);
+  el.innerHTML = `
+    <div class="card-title">ポートフォリオ</div>
+    <div class="big-number">${fmtY(Math.round(total))}</div>
+    <div class="stat-row" style="margin-top:8px">
+      <span class="stat-label">現金</span>
+      <span class="stat-value">${fmtY(Math.round(pf.cash))}</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">確定損益</span>
+      <span class="stat-value ${pnlClass(pnl)}">${fmt(pnl)} (${pnl >= 0 ? '+' : ''}${pnlPct}%)</span>
+    </div>
+    <div class="updated">更新: ${pf.last_updated || '-'}</div>
+  `;
+}
+
+function renderPositions(pf) {
+  const el = document.getElementById('card-positions');
+  const pos = Object.entries(pf.positions || {});
+  if (pos.length === 0) {
+    el.innerHTML = `<div class="card-title">保有ポジション</div><div class="empty">ポジションなし</div>`;
+    return;
+  }
+  const items = pos.map(([code, p]) => {
+    const entry = p.entry_price || 0;
+    const current = p.current_price || entry;
+    const qty = p.quantity || 0;
+    const unrealized = (current - entry) * qty;
+    const unrealizedPct = entry > 0 ? ((current / entry - 1) * 100).toFixed(1) : '0.0';
+    return `
+      <div class="position-item">
+        <div class="pos-top">
+          <span class="pos-code">${code}</span>
+          <span class="pos-pnl ${pnlClass(unrealized)}">${fmt(Math.round(unrealized))} (${unrealizedPct}%)</span>
+        </div>
+        <div class="pos-detail">${qty}株 @ ${fmtY(entry)} → ${fmtY(current)}</div>
+      </div>
+    `;
+  }).join('');
+  el.innerHTML = `<div class="card-title">保有ポジション（${pos.length}件）</div>${items}`;
+}
+
+async function loadAll() {
+  document.getElementById('last-fetch').textContent = '更新中...';
+  try {
+    const [pf, sigText] = await Promise.all([loadPortfolio(), loadSignals()]);
+    const parsed = parseSignals(sigText);
+    renderMarket(parsed);
+    renderSignals(parsed);
+    renderPortfolio(pf);
+    renderPositions(pf);
+    const now = new Date().toLocaleString('ja-JP', {timeZone: 'Asia/Tokyo'});
+    document.getElementById('last-fetch').textContent = `最終取得: ${now} JST`;
+  } catch (e) {
+    document.getElementById('last-fetch').textContent = `エラー: ${e.message}`;
+    console.error(e);
+  }
+}
+
+loadAll();
+</script>
+</body>
+</html>
