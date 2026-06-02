@@ -28,6 +28,7 @@
 !btc_history.py
 !btc_strategy_v5.py
 !btc_strategy_v6.py
+!btc_strategy_v7.py
 !btc_portfolio.json
 !btc_log
 !btc_log/**
