@@ -1,18 +1,9 @@
 {
   "created": "2026-06-01",
-  "last_updated": "2026-05-29",
+  "last_updated": "2026-06-03",
   "cash": 1000000.0,
   "positions": {},
-  "pending_orders": {
-    "3436": {
-      "action": "buy",
-      "deferred": 0
-    },
-    "4063": {
-      "action": "buy",
-      "deferred": 0
-    }
-  },
+  "pending_orders": {},
   "realized_trades": [],
   "total_realized_pnl": 0.0,
   "params": {
@@ -21,5 +12,7 @@
     "trailing": 0.05,
     "atr_period": 14,
     "source": "backtest optimised on 2026-06-02"
-  }
+  },
+  "gc_wait": {},
+  "stop_cooldowns": {}
 }
