@@ -1,24 +1,16 @@
 {
-  "updated": "2026-06-25T01:41:58.262345+09:00",
+  "updated": "2026-07-02T02:14:32.679529+09:00",
   "codes": {
-    "9984": {
-      "roe": 0.32724,
+    "8035": {
+      "roe": 0.2927,
       "profitable": true
     },
     "6857": {
       "roe": 0.57646,
       "profitable": true
     },
-    "5803": {
-      "roe": 0.31511,
-      "profitable": true
-    },
-    "8035": {
-      "roe": 0.2927,
-      "profitable": true
-    },
-    "5801": {
-      "roe": 0.18773001,
+    "6920": {
+      "roe": 0.4408,
       "profitable": true
     },
     "6976": {
@@ -33,20 +25,8 @@
       "roe": 0.12167,
       "profitable": true
     },
-    "6920": {
-      "roe": 0.4408,
-      "profitable": true
-    },
-    "6146": {
-      "roe": 0.25092,
-      "profitable": true
-    },
-    "8306": {
-      "roe": 0.11911,
-      "profitable": true
-    },
-    "5016": {
-      "roe": null,
+    "9984": {
+      "roe": 0.32724,
       "profitable": true
     },
     "5706": {
@@ -54,175 +34,187 @@
       "profitable": true
     },
     "8316": {
-      "roe": 0.09776,
+      "roe": 0.10299,
       "profitable": true
     },
-    "7011": {
-      "roe": 0.12579,
-      "profitable": true
-    },
-    "5802": {
-      "roe": 0.14953,
-      "profitable": true
-    },
-    "8411": {
-      "roe": 0.11439,
-      "profitable": true
-    },
-    "6723": {
-      "roe": -0.00389,
-      "profitable": false
-    },
-    "7203": {
-      "roe": 0.10233,
+    "5016": {
+      "roe": null,
       "profitable": true
     },
     "9983": {
       "roe": 0.20616,
       "profitable": true
     },
+    "8411": {
+      "roe": 0.11439,
+      "profitable": true
+    },
+    "7011": {
+      "roe": 0.12579,
+      "profitable": true
+    },
+    "6723": {
+      "roe": -0.00389,
+      "profitable": false
+    },
     "6758": {
       "roe": 0.12336001,
+      "profitable": true
+    },
+    "7203": {
+      "roe": 0.10233,
       "profitable": true
     },
     "7974": {
       "roe": 0.14931,
       "profitable": true
     },
-    "6501": {
-      "roe": 0.13299,
+    "6146": {
+      "roe": null,
+      "profitable": false
+    },
+    "6762": {
+      "roe": 0.09922,
       "profitable": true
     },
-    "4004": {
-      "roe": 0.05466,
+    "6501": {
+      "roe": 0.13299,
       "profitable": true
     },
     "6525": {
       "roe": 0.1449,
       "profitable": true
     },
-    "4063": {
-      "roe": 0.106800005,
+    "6752": {
+      "roe": 0.040749997,
       "profitable": true
     },
     "6098": {
       "roe": 0.30831,
       "profitable": true
     },
-    "8058": {
-      "roe": 0.08984999,
+    "6861": {
+      "roe": 0.13531,
       "profitable": true
     },
-    "3436": {
-      "roe": -0.03478,
-      "profitable": false
-    },
-    "3110": {
-      "roe": 0.26773,
+    "4063": {
+      "roe": 0.106800005,
       "profitable": true
     },
     "6954": {
       "roe": 0.09352,
       "profitable": true
     },
-    "8766": {
-      "roe": 0.18701,
+    "3436": {
+      "roe": -0.03478,
+      "profitable": false
+    },
+    "4004": {
+      "roe": 0.05466,
       "profitable": true
     },
-    "6861": {
-      "roe": 0.13531,
-      "profitable": true
-    },
-    "7013": {
-      "roe": 0.27763999,
-      "profitable": true
-    },
-    "7012": {
-      "roe": 0.13734001,
-      "profitable": true
-    },
-    "6503": {
-      "roe": 0.09964,
+    "3110": {
+      "roe": 0.26773,
       "profitable": true
     },
     "7735": {
       "roe": 0.20278999,
       "profitable": true
     },
+    "8058": {
+      "roe": 0.08984999,
+      "profitable": true
+    },
+    "6503": {
+      "roe": 0.09964,
+      "profitable": true
+    },
+    "8136": {
+      "roe": null,
+      "profitable": true
+    },
+    "8766": {
+      "roe": 0.18701,
+      "profitable": true
+    },
     "6506": {
       "roe": 0.0784,
       "profitable": true
     },
-    "6702": {
-      "roe": 0.15623,
-      "profitable": true
-    },
-    "8031": {
-      "roe": 0.10301,
-      "profitable": true
-    },
-    "2802": {
-      "roe": 0.17503001,
+    "7013": {
+      "roe": 0.27763999,
       "profitable": true
     },
     "6971": {
       "roe": 0.04384,
       "profitable": true
     },
+    "7012": {
+      "roe": 0.13734001,
+      "profitable": true
+    },
     "6701": {
       "roe": 0.12557,
       "profitable": true
     },
-    "7220": {
-      "roe": 0.018380001,
+    "8031": {
+      "roe": 0.10301,
       "profitable": true
     },
     "6963": {
-      "roe": null,
+      "roe": -0.19219999,
       "profitable": false
     },
-    "8001": {
-      "roe": 0.1391,
+    "2802": {
+      "roe": 0.17503001,
       "profitable": true
     },
     "2914": {
       "roe": 0.13618,
       "profitable": true
     },
+    "6702": {
+      "roe": 0.15623,
+      "profitable": true
+    },
+    "7741": {
+      "roe": 0.25062,
+      "profitable": true
+    },
     "6526": {
       "roe": 0.06466,
       "profitable": true
     },
-    "7267": {
-      "roe": -0.028499998,
-      "profitable": false
-    },
-    "6301": {
-      "roe": 0.113900006,
-      "profitable": true
-    },
-    "5713": {
-      "roe": 0.08695,
+    "8001": {
+      "roe": 0.1391,
       "profitable": true
     },
     "6367": {
       "roe": 0.09262,
       "profitable": true
     },
+    "5713": {
+      "roe": 0.08695,
+      "profitable": true
+    },
+    "7267": {
+      "roe": -0.028499998,
+      "profitable": false
+    },
+    "9433": {
+      "roe": 0.14006,
+      "profitable": true
+    },
+    "7220": {
+      "roe": 0.018380001,
+      "profitable": true
+    },
     "8591": {
       "roe": 0.10418,
       "profitable": true
     },
-    "8053": {
-      "roe": 0.13518,
-      "profitable": true
-    },
-    "8002": {
-      "roe": 0.13502,
-      "profitable": true
-    },
-    "9433": {
-      "roe": 0.14006,
+    "6301": {
+      "roe": 0.113900006,
       "profitable": true
     },
     "4502": {
@@ -233,176 +225,172 @@
       "roe": 0.05881,
       "profitable": true
     },
-    "6273": {
-      "roe": 0.08274999,
-      "profitable": true
-    },
-    "6787": {
-      "roe": 0.15383,
-      "profitable": true
-    },
-    "8308": {
-      "roe": 0.09156,
-      "profitable": true
-    },
-    "4568": {
-      "roe": 0.15809,
-      "profitable": true
-    },
-    "1605": {
-      "roe": 0.08282,
-      "profitable": true
-    },
-    "8630": {
-      "roe": 0.13510999,
-      "profitable": true
-    },
-    "4519": {
-      "roe": 0.23707001,
+    "8002": {
+      "roe": 0.13502,
       "profitable": true
     },
     "8725": {
       "roe": 0.17839001,
       "profitable": true
     },
-    "8801": {
-      "roe": 0.08169,
-      "profitable": true
-    },
-    "3687": {
-      "roe": 0.21553,
-      "profitable": true
-    },
-    "8136": {
-      "roe": null,
-      "profitable": true
-    },
-    "4901": {
-      "roe": 0.07706,
-      "profitable": true
-    },
-    "6594": {
-      "roe": 0.06313,
-      "profitable": true
-    },
-    "6504": {
-      "roe": 0.1289,
+    "8053": {
+      "roe": 0.13518,
       "profitable": true
     },
     "6361": {
       "roe": 0.09571999,
       "profitable": true
     },
-    "9101": {
-      "roe": 0.07056,
+    "8801": {
+      "roe": 0.08169,
+      "profitable": true
+    },
+    "4568": {
+      "roe": 0.15809,
+      "profitable": true
+    },
+    "6273": {
+      "roe": 0.08274999,
+      "profitable": true
+    },
+    "1605": {
+      "roe": 0.08282,
+      "profitable": true
+    },
+    "8308": {
+      "roe": 0.09156,
       "profitable": true
     },
     "8309": {
       "roe": 0.095419995,
       "profitable": true
     },
-    "9104": {
-      "roe": 0.07566,
-      "profitable": true
-    },
     "6479": {
       "roe": 0.11915,
+      "profitable": true
+    },
+    "6787": {
+      "roe": 0.15383,
       "profitable": true
     },
     "6871": {
       "roe": 0.24231,
       "profitable": true
     },
-    "5401": {
-      "roe": 0.0075,
-      "profitable": true
-    },
-    "6902": {
-      "roe": 0.08941,
-      "profitable": true
-    },
-    "8802": {
-      "roe": 0.08384,
-      "profitable": true
-    },
-    "8015": {
-      "roe": 0.13203,
-      "profitable": true
-    },
-    "5201": {
-      "roe": null,
+    "4901": {
+      "roe": 0.07706,
       "profitable": true
     },
     "8750": {
       "roe": 0.11062,
       "profitable": true
     },
-    "6178": {
-      "roe": 0.0468,
+    "3687": {
+      "roe": 0.21553,
       "profitable": true
     },
-    "4503": {
-      "roe": 0.17438,
+    "4519": {
+      "roe": 0.23707001,
       "profitable": true
     },
-    "8830": {
-      "roe": 0.091630004,
+    "7751": {
+      "roe": 0.09372,
       "profitable": true
     },
-    "8604": {
-      "roe": 0.1007,
+    "9101": {
+      "roe": 0.07056,
+      "profitable": true
+    },
+    "6594": {
+      "roe": 0.06313,
+      "profitable": true
+    },
+    "8630": {
+      "roe": 0.13510999,
+      "profitable": true
+    },
+    "9104": {
+      "roe": 0.07566,
+      "profitable": true
+    },
+    "5401": {
+      "roe": 0.0075,
+      "profitable": true
+    },
+    "8802": {
+      "roe": 0.08384,
+      "profitable": true
+    },
+    "6902": {
+      "roe": 0.08941,
+      "profitable": true
+    },
+    "6504": {
+      "roe": 0.1289,
       "profitable": true
     },
     "7936": {
       "roe": 0.40855,
       "profitable": true
     },
-    "6965": {
-      "roe": 0.0427,
+    "8604": {
+      "roe": 0.1007,
+      "profitable": true
+    },
+    "5201": {
+      "roe": null,
       "profitable": true
     },
     "7269": {
       "roe": 0.13873,
       "profitable": true
     },
-    "6315": {
-      "roe": 0.06959,
+    "8830": {
+      "roe": 0.091630004,
       "profitable": true
     },
-    "5108": {
-      "roe": 0.09287,
-      "profitable": true
-    },
-    "4307": {
-      "roe": 0.03604,
-      "profitable": true
-    },
-    "9412": {
-      "roe": 0.080019996,
-      "profitable": true
-    },
-    "6324": {
-      "roe": 0.020179998,
+    "4503": {
+      "roe": 0.17438,
       "profitable": true
     },
     "5332": {
       "roe": 0.071830004,
       "profitable": true
     },
-    "3382": {
-      "roe": 0.07605,
+    "5333": {
+      "roe": 0.078099996,
       "profitable": true
     },
-    "4543": {
-      "roe": 0.09205,
-      "profitable": true
-    },
-    "1812": {
-      "roe": null,
+    "6315": {
+      "roe": 0.06959,
       "profitable": true
     },
     "9107": {
       "roe": 0.07754,
+      "profitable": true
+    },
+    "8015": {
+      "roe": 0.13203,
+      "profitable": true
+    },
+    "6178": {
+      "roe": 0.0468,
+      "profitable": true
+    },
+    "6324": {
+      "roe": 0.020179998,
+      "profitable": true
+    },
+    "4661": {
+      "roe": null,
+      "profitable": true
+    },
+    "5108": {
+      "roe": 0.09287,
+      "profitable": true
+    },
+    "9412": {
+      "roe": 0.080019996,
       "profitable": true
     },
     "7453": {
@@ -413,68 +401,76 @@
       "roe": 0.18494,
       "profitable": true
     },
-    "9020": {
-      "roe": 0.08387,
+    "4980": {
+      "roe": 0.27289,
       "profitable": true
     },
-    "4661": {
-      "roe": null,
+    "6965": {
+      "roe": 0.0427,
       "profitable": true
     },
-    "5333": {
-      "roe": 0.078099996,
+    "3382": {
+      "roe": 0.07605,
       "profitable": true
     },
-    "4578": {
-      "roe": 0.12943,
-      "profitable": true
-    },
-    "8267": {
-      "roe": 0.057579998,
+    "4307": {
+      "roe": 0.03604,
       "profitable": true
     },
     "6779": {
       "roe": 0.06761,
       "profitable": true
     },
-    "6326": {
-      "roe": 0.08871,
+    "3563": {
+      "roe": 0.29883,
       "profitable": true
     },
-    "4755": {
-      "roe": -0.05229,
-      "profitable": false
-    },
-    "5838": {
-      "roe": 0.20292,
-      "profitable": true
-    },
-    "9766": {
-      "roe": 0.19115,
-      "profitable": true
-    },
-    "7270": {
-      "roe": 0.033069998,
-      "profitable": true
-    },
-    "4980": {
-      "roe": 0.27289,
-      "profitable": true
-    },
-    "5020": {
-      "roe": 0.085,
-      "profitable": true
-    },
-    "7003": {
-      "roe": 0.19062,
+    "4578": {
+      "roe": 0.12943,
       "profitable": true
     },
     "9022": {
       "roe": 0.114700004,
       "profitable": true
     },
-    "7701": {
-      "roe": 0.113800004,
+    "4755": {
+      "roe": -0.05229,
+      "profitable": false
+    },
+    "9020": {
+      "roe": 0.08387,
+      "profitable": true
+    },
+    "4543": {
+      "roe": 0.09205,
+      "profitable": true
+    },
+    "1812": {
+      "roe": null,
+      "profitable": true
+    },
+    "8267": {
+      "roe": 0.057579998,
+      "profitable": true
+    },
+    "7270": {
+      "roe": 0.033069998,
+      "profitable": true
+    },
+    "5020": {
+      "roe": 0.085,
+      "profitable": true
+    },
+    "6326": {
+      "roe": 0.08871,
+      "profitable": true
+    },
+    "9766": {
+      "roe": 0.19115,
+      "profitable": true
+    },
+    "1925": {
+      "roe": 0.12528,
       "profitable": true
     },
     "6383": {
@@ -485,340 +481,304 @@
       "roe": 0.13204001,
       "profitable": true
     },
-    "3563": {
-      "roe": 0.29883,
-      "profitable": true
-    },
-    "1925": {
-      "roe": 0.12528,
-      "profitable": true
-    },
-    "8795": {
-      "roe": 0.09573,
-      "profitable": true
-    },
-    "4204": {
-      "roe": 0.090129994,
-      "profitable": true
-    },
-    "9201": {
-      "roe": 0.12286,
-      "profitable": true
-    },
     "9502": {
       "roe": 0.077360004,
-      "profitable": true
-    },
-    "4186": {
-      "roe": 0.05544,
-      "profitable": true
-    },
-    "8303": {
-      "roe": 0.10307,
-      "profitable": true
-    },
-    "4452": {
-      "roe": 0.11929,
       "profitable": true
     },
     "8473": {
       "roe": 0.20614,
       "profitable": true
     },
-    "4911": {
-      "roe": -0.05583,
-      "profitable": false
-    },
-    "1802": {
-      "roe": 0.14071,
-      "profitable": true
-    },
     "1928": {
       "roe": 0.12644,
       "profitable": true
     },
-    "7832": {
-      "roe": 0.17034,
+    "5838": {
+      "roe": 0.20292,
       "profitable": true
     },
-    "2502": {
-      "roe": 0.05805,
+    "4452": {
+      "roe": 0.11929,
+      "profitable": true
+    },
+    "8795": {
+      "roe": 0.09573,
       "profitable": true
     },
     "6988": {
       "roe": 0.12172,
       "profitable": true
     },
-    "9005": {
-      "roe": 0.09718,
-      "profitable": true
-    },
-    "8697": {
-      "roe": 0.22972,
-      "profitable": true
-    },
-    "9503": {
-      "roe": 0.11607,
-      "profitable": true
-    },
-    "9735": {
-      "roe": 0.08693,
-      "profitable": true
-    },
-    "2413": {
-      "roe": 0.12577,
-      "profitable": true
-    },
-    "7911": {
-      "roe": 0.05034,
+    "4186": {
+      "roe": 0.05544,
       "profitable": true
     },
     "6645": {
       "roe": 0.03822,
       "profitable": true
     },
+    "7911": {
+      "roe": 0.05034,
+      "profitable": true
+    },
+    "1802": {
+      "roe": 0.14071,
+      "profitable": true
+    },
+    "2502": {
+      "roe": 0.05805,
+      "profitable": true
+    },
     "5334": {
       "roe": 0.16108999,
       "profitable": true
     },
-    "3407": {
-      "roe": 0.080170006,
-      "profitable": true
-    },
-    "7532": {
-      "roe": null,
-      "profitable": true
-    },
-    "9697": {
-      "roe": 0.22112,
-      "profitable": true
-    },
-    "6590": {
-      "roe": 0.21715,
-      "profitable": true
-    },
-    "7733": {
-      "roe": 0.08719,
-      "profitable": true
-    },
-    "6997": {
-      "roe": 0.04058,
+    "8697": {
+      "roe": 0.22972,
       "profitable": true
     },
     "2503": {
       "roe": 0.12194,
       "profitable": true
     },
+    "3407": {
+      "roe": 0.080170006,
+      "profitable": true
+    },
+    "9735": {
+      "roe": 0.08693,
+      "profitable": true
+    },
+    "6997": {
+      "roe": 0.04058,
+      "profitable": true
+    },
+    "9503": {
+      "roe": 0.11607,
+      "profitable": true
+    },
+    "7733": {
+      "roe": 0.08719,
+      "profitable": true
+    },
+    "7003": {
+      "roe": 0.19062,
+      "profitable": true
+    },
     "5411": {
       "roe": 0.028110001,
       "profitable": true
     },
-    "9531": {
-      "roe": 0.12762,
+    "9201": {
+      "roe": 0.12286,
       "profitable": true
     },
-    "5631": {
-      "roe": 0.09476,
+    "7532": {
+      "roe": null,
       "profitable": true
     },
-    "3626": {
-      "roe": 0.14008,
+    "4911": {
+      "roe": -0.05583,
+      "profitable": false
+    },
+    "9843": {
+      "roe": null,
       "profitable": true
     },
-    "1803": {
-      "roe": 0.13412,
-      "profitable": true
-    },
-    "4507": {
-      "roe": 0.13508001,
+    "7832": {
+      "roe": 0.17034,
       "profitable": true
     },
     "9021": {
       "roe": 0.10167,
       "profitable": true
     },
-    "6869": {
-      "roe": 0.072919995,
-      "profitable": true
-    },
-    "9843": {
-      "roe": null,
-      "profitable": true
-    },
-    "3092": {
-      "roe": 0.46640998,
+    "3086": {
+      "roe": 0.06597,
       "profitable": true
     },
     "6278": {
       "roe": 0.09516,
       "profitable": true
     },
-    "7272": {
-      "roe": 0.03845,
-      "profitable": true
-    },
-    "6532": {
-      "roe": 0.35793,
-      "profitable": true
-    },
-    "3088": {
-      "roe": 0.10526,
-      "profitable": true
-    },
-    "4523": {
-      "roe": 0.045250002,
-      "profitable": true
-    },
-    "9202": {
-      "roe": 0.1294,
-      "profitable": true
-    },
-    "3099": {
-      "roe": 0.12443,
-      "profitable": true
-    },
-    "6269": {
-      "roe": 0.32432997,
-      "profitable": true
-    },
-    "7729": {
-      "roe": 0.13453001,
-      "profitable": true
-    },
-    "7261": {
-      "roe": 0.01924,
+    "5631": {
+      "roe": 0.09476,
       "profitable": true
     },
     "6323": {
       "roe": 0.13018,
       "profitable": true
     },
-    "2801": {
-      "roe": 0.11459,
+    "2413": {
+      "roe": 0.12577,
       "profitable": true
     },
-    "4182": {
-      "roe": -0.049590003,
-      "profitable": false
-    },
-    "6481": {
-      "roe": 0.05193,
+    "1803": {
+      "roe": 0.13412,
       "profitable": true
     },
-    "5805": {
-      "roe": 0.21048,
+    "6532": {
+      "roe": 0.35793,
       "profitable": true
     },
-    "6996": {
-      "roe": 0.057550002,
-      "profitable": true
-    },
-    "8593": {
-      "roe": 0.085389994,
-      "profitable": true
-    },
-    "6841": {
-      "roe": 0.12125,
-      "profitable": true
-    },
-    "4188": {
-      "roe": -0.00696,
-      "profitable": false
-    },
-    "9024": {
-      "roe": 0.06855,
-      "profitable": true
-    },
-    "1942": {
-      "roe": 0.16758,
-      "profitable": true
-    },
-    "8601": {
-      "roe": 0.095860004,
-      "profitable": true
-    },
-    "6113": {
-      "roe": null,
-      "profitable": true
-    },
-    "4704": {
-      "roe": 0.33821,
-      "profitable": true
-    },
-    "4506": {
-      "roe": 0.46266997,
-      "profitable": true
-    },
-    "4385": {
-      "roe": 0.32965,
-      "profitable": true
-    },
-    "9532": {
-      "roe": 0.08501001,
-      "profitable": true
-    },
-    "6724": {
-      "roe": 0.021949999,
+    "3099": {
+      "roe": 0.12443,
       "profitable": true
     },
     "3197": {
       "roe": 0.09814,
       "profitable": true
     },
-    "9147": {
-      "roe": 0.00921,
+    "9697": {
+      "roe": 0.22112,
       "profitable": true
     },
-    "7202": {
-      "roe": 0.10679,
+    "4204": {
+      "roe": 0.090129994,
       "profitable": true
     },
-    "5019": {
-      "roe": 0.08951,
+    "6754": {
+      "roe": 0.09088001,
+      "profitable": true
+    },
+    "2801": {
+      "roe": 0.11459,
+      "profitable": true
+    },
+    "7261": {
+      "roe": 0.01924,
+      "profitable": true
+    },
+    "7729": {
+      "roe": 0.13453001,
+      "profitable": true
+    },
+    "8601": {
+      "roe": 0.095860004,
+      "profitable": true
+    },
+    "6269": {
+      "roe": 0.32432997,
+      "profitable": true
+    },
+    "4507": {
+      "roe": 0.13508001,
+      "profitable": true
+    },
+    "9024": {
+      "roe": 0.06855,
+      "profitable": true
+    },
+    "4523": {
+      "roe": 0.045250002,
+      "profitable": true
+    },
+    "6113": {
+      "roe": null,
+      "profitable": true
+    },
+    "7272": {
+      "roe": 0.03845,
+      "profitable": true
+    },
+    "9202": {
+      "roe": 0.1294,
+      "profitable": true
+    },
+    "6841": {
+      "roe": 0.12125,
+      "profitable": true
+    },
+    "7701": {
+      "roe": 0.113800004,
       "profitable": true
     },
     "6674": {
       "roe": 0.11377,
       "profitable": true
     },
+    "6996": {
+      "roe": 0.057550002,
+      "profitable": true
+    },
+    "4188": {
+      "roe": -0.00696,
+      "profitable": false
+    },
+    "4182": {
+      "roe": -0.049590003,
+      "profitable": false
+    },
+    "9147": {
+      "roe": 0.00921,
+      "profitable": true
+    },
+    "4385": {
+      "roe": 0.32965,
+      "profitable": true
+    },
+    "1942": {
+      "roe": 0.16758,
+      "profitable": true
+    },
+    "8593": {
+      "roe": 0.085389994,
+      "profitable": true
+    },
+    "9531": {
+      "roe": 0.12762,
+      "profitable": true
+    },
+    "4684": {
+      "roe": 0.15832,
+      "profitable": true
+    },
     "1944": {
       "roe": 0.10967,
       "profitable": true
     },
-    "6134": {
-      "roe": 0.06985,
+    "4704": {
+      "roe": 0.33821,
       "profitable": true
     },
-    "7173": {
-      "roe": 0.10661,
+    "6481": {
+      "roe": 0.05193,
+      "profitable": true
+    },
+    "3092": {
+      "roe": 0.46640998,
+      "profitable": true
+    },
+    "7202": {
+      "roe": 0.10679,
       "profitable": true
     },
     "7912": {
       "roe": 0.086260006,
       "profitable": true
     },
-    "3659": {
-      "roe": 0.11564,
-      "profitable": true
-    },
-    "9042": {
-      "roe": 0.07153,
-      "profitable": true
-    },
-    "3086": {
-      "roe": 0.06597,
-      "profitable": true
-    },
-    "5101": {
-      "roe": 0.11841,
+    "6134": {
+      "roe": 0.06985,
       "profitable": true
     },
     "2768": {
       "roe": 0.09961,
       "profitable": true
     },
-    "8113": {
-      "roe": 0.07699,
+    "4506": {
+      "roe": 0.46266997,
+      "profitable": true
+    },
+    "8331": {
+      "roe": 0.0783,
+      "profitable": true
+    },
+    "4005": {
+      "roe": 0.099870004,
+      "profitable": true
+    },
+    "5019": {
+      "roe": 0.08951,
       "profitable": true
     },
     "7186": {
@@ -829,328 +789,500 @@
       "roe": 0.06266,
       "profitable": true
     },
-    "4684": {
-      "roe": 0.15832,
+    "5101": {
+      "roe": 0.11841,
       "profitable": true
     },
-    "4005": {
-      "roe": 0.099870004,
+    "6724": {
+      "roe": 0.021949999,
       "profitable": true
     },
-    "4768": {
-      "roe": 0.17781,
-      "profitable": true
-    },
-    "8331": {
-      "roe": 0.0783,
-      "profitable": true
-    },
-    "1878": {
-      "roe": 0.20537001,
-      "profitable": true
-    },
-    "5844": {
-      "roe": 0.08716,
-      "profitable": true
-    },
-    "3402": {
-      "roe": 0.04772,
-      "profitable": true
-    },
-    "4751": {
-      "roe": 0.21073,
-      "profitable": true
-    },
-    "3064": {
-      "roe": null,
-      "profitable": true
-    },
-    "6728": {
-      "roe": 0.06086,
-      "profitable": true
-    },
-    "6305": {
-      "roe": 0.09119,
-      "profitable": true
-    },
-    "3003": {
-      "roe": 0.1299,
+    "9042": {
+      "roe": 0.07153,
       "profitable": true
     },
     "1911": {
       "roe": 0.12991,
       "profitable": true
     },
+    "9005": {
+      "roe": 0.09718,
+      "profitable": true
+    },
+    "4768": {
+      "roe": 0.17781,
+      "profitable": true
+    },
+    "5844": {
+      "roe": 0.08716,
+      "profitable": true
+    },
+    "8113": {
+      "roe": 0.07699,
+      "profitable": true
+    },
+    "1878": {
+      "roe": 0.20537001,
+      "profitable": true
+    },
+    "6728": {
+      "roe": 0.06086,
+      "profitable": true
+    },
+    "4751": {
+      "roe": 0.21073,
+      "profitable": true
+    },
+    "9532": {
+      "roe": 0.08501001,
+      "profitable": true
+    },
+    "7173": {
+      "roe": 0.10661,
+      "profitable": true
+    },
     "6407": {
       "roe": 0.09362,
-      "profitable": true
-    },
-    "7550": {
-      "roe": 0.15738,
-      "profitable": true
-    },
-    "3697": {
-      "roe": 0.22632,
-      "profitable": true
-    },
-    "7309": {
-      "roe": 0.043670002,
-      "profitable": true
-    },
-    "4022": {
-      "roe": 0.146,
       "profitable": true
     },
     "7259": {
       "roe": 0.085559994,
       "profitable": true
     },
+    "3659": {
+      "roe": 0.11564,
+      "profitable": true
+    },
+    "7550": {
+      "roe": 0.15738,
+      "profitable": true
+    },
+    "6869": {
+      "roe": 0.072919995,
+      "profitable": true
+    },
     "5214": {
       "roe": 0.069,
+      "profitable": true
+    },
+    "8233": {
+      "roe": -0.0143099995,
+      "profitable": false
+    },
+    "9962": {
+      "roe": 0.11061,
+      "profitable": true
+    },
+    "7309": {
+      "roe": 0.043670002,
       "profitable": true
     },
     "5831": {
       "roe": 0.075430006,
       "profitable": true
     },
-    "6806": {
-      "roe": 0.08859,
-      "profitable": true
-    },
-    "4612": {
-      "roe": 0.11474,
-      "profitable": true
-    },
-    "3391": {
-      "roe": 0.07546,
-      "profitable": true
-    },
-    "9602": {
-      "roe": 0.10328,
+    "3697": {
+      "roe": 0.22632,
       "profitable": true
     },
     "9023": {
       "roe": 0.08133,
       "profitable": true
     },
-    "5110": {
-      "roe": 0.08461001,
+    "4022": {
+      "roe": 0.146,
       "profitable": true
     },
-    "4183": {
-      "roe": 0.04788,
+    "3626": {
+      "roe": 0.14008,
       "profitable": true
     },
-    "5711": {
-      "roe": 0.06501,
+    "9602": {
+      "roe": 0.10328,
       "profitable": true
     },
-    "7731": {
-      "roe": -0.14019,
-      "profitable": false
-    },
-    "7826": {
-      "roe": 0.05692,
+    "5991": {
+      "roe": 0.065349996,
       "profitable": true
     },
-    "9962": {
-      "roe": 0.11061,
+    "3402": {
+      "roe": 0.04772,
       "profitable": true
     },
     "4021": {
       "roe": 0.20393999,
       "profitable": true
     },
-    "1963": {
-      "roe": 0.101689994,
-      "profitable": true
-    },
     "2875": {
       "roe": 0.13586001,
       "profitable": true
     },
-    "4047": {
-      "roe": 0.053990003,
+    "3003": {
+      "roe": 0.1299,
       "profitable": true
     },
-    "4043": {
-      "roe": 0.078839995,
+    "7731": {
+      "roe": -0.14019,
+      "profitable": false
+    },
+    "3088": {
+      "roe": 0.10526,
       "profitable": true
     },
-    "6966": {
-      "roe": 0.06084,
+    "6806": {
+      "roe": 0.08859,
       "profitable": true
     },
-    "3289": {
-      "roe": 0.11184,
+    "5711": {
+      "roe": 0.06501,
       "profitable": true
     },
-    "4042": {
-      "roe": 0.06306,
+    "4612": {
+      "roe": 0.11474,
       "profitable": true
     },
-    "6586": {
-      "roe": 0.08202,
+    "5110": {
+      "roe": 0.08461001,
+      "profitable": true
+    },
+    "6305": {
+      "roe": 0.09119,
+      "profitable": true
+    },
+    "4183": {
+      "roe": 0.04788,
       "profitable": true
     },
     "5076": {
       "roe": 0.13163,
       "profitable": true
     },
-    "6368": {
-      "roe": 0.21504,
-      "profitable": true
-    },
     "6370": {
       "roe": 0.1179,
+      "profitable": true
+    },
+    "4047": {
+      "roe": 0.053990003,
       "profitable": true
     },
     "8354": {
       "roe": 0.08518,
       "profitable": true
     },
-    "3038": {
-      "roe": 0.21661,
-      "profitable": true
-    },
     "6856": {
       "roe": 0.11576,
       "profitable": true
     },
-    "6141": {
-      "roe": 0.025120001,
+    "3289": {
+      "roe": 0.11193,
       "profitable": true
     },
-    "5714": {
-      "roe": 0.14483,
-      "profitable": true
-    },
-    "2587": {
-      "roe": 0.08101,
-      "profitable": true
-    },
-    "3231": {
-      "roe": 0.106750004,
-      "profitable": true
-    },
-    "4203": {
-      "roe": 0.08806,
-      "profitable": true
-    },
-    "4528": {
-      "roe": 0.08501001,
-      "profitable": true
-    },
-    "9684": {
-      "roe": 0.08648,
-      "profitable": true
-    },
-    "6941": {
-      "roe": 0.21040002,
-      "profitable": true
-    },
-    "4368": {
-      "roe": 0.12936,
-      "profitable": true
-    },
-    "5929": {
-      "roe": 0.17823,
-      "profitable": true
-    },
-    "2267": {
-      "roe": 0.077410005,
-      "profitable": true
-    },
-    "6473": {
-      "roe": 0.01798,
-      "profitable": true
-    },
-    "7752": {
-      "roe": 0.05094,
-      "profitable": true
-    },
-    "3923": {
-      "roe": 0.55375,
-      "profitable": true
-    },
-    "5938": {
-      "roe": 0.01362,
-      "profitable": true
-    },
-    "2371": {
-      "roe": 0.29622,
-      "profitable": true
-    },
-    "4631": {
-      "roe": 0.102110006,
-      "profitable": true
-    },
-    "5032": {
-      "roe": 0.57595,
-      "profitable": true
-    },
-    "6264": {
-      "roe": 0.19094999,
-      "profitable": true
-    },
-    "2579": {
-      "roe": -0.110640004,
-      "profitable": false
-    },
-    "2871": {
-      "roe": 0.09937,
-      "profitable": true
-    },
-    "8252": {
-      "roe": null,
-      "profitable": true
-    },
-    "4194": {
-      "roe": 0.24264999,
-      "profitable": true
-    },
-    "5233": {
-      "roe": 0.03874,
-      "profitable": true
-    },
-    "6448": {
-      "roe": 0.08583,
+    "4042": {
+      "roe": 0.06306,
       "profitable": true
     },
     "7717": {
       "roe": 0.06777,
       "profitable": true
     },
+    "5471": {
+      "roe": 0.070989996,
+      "profitable": true
+    },
+    "1963": {
+      "roe": 0.101689994,
+      "profitable": true
+    },
+    "6368": {
+      "roe": 0.21504,
+      "profitable": true
+    },
+    "4043": {
+      "roe": 0.078839995,
+      "profitable": true
+    },
+    "6254": {
+      "roe": 0.099350005,
+      "profitable": true
+    },
+    "2587": {
+      "roe": 0.08101,
+      "profitable": true
+    },
+    "3038": {
+      "roe": 0.21661,
+      "profitable": true
+    },
+    "7826": {
+      "roe": 0.05692,
+      "profitable": true
+    },
+    "3064": {
+      "roe": null,
+      "profitable": true
+    },
+    "5714": {
+      "roe": 0.14483,
+      "profitable": true
+    },
+    "6966": {
+      "roe": 0.06084,
+      "profitable": true
+    },
+    "6622": {
+      "roe": 0.09656999,
+      "profitable": true
+    },
+    "9435": {
+      "roe": 0.14457,
+      "profitable": true
+    },
+    "6141": {
+      "roe": 0.025120001,
+      "profitable": true
+    },
+    "4528": {
+      "roe": 0.08501001,
+      "profitable": true
+    },
+    "4203": {
+      "roe": 0.08806,
+      "profitable": true
+    },
+    "3231": {
+      "roe": 0.106750004,
+      "profitable": true
+    },
+    "4061": {
+      "roe": 0.03478,
+      "profitable": true
+    },
+    "2897": {
+      "roe": 0.092,
+      "profitable": true
+    },
+    "6941": {
+      "roe": 0.21040002,
+      "profitable": true
+    },
+    "7181": {
+      "roe": 0.04565,
+      "profitable": true
+    },
+    "6302": {
+      "roe": 0.049239997,
+      "profitable": true
+    },
+    "8804": {
+      "roe": 0.08877,
+      "profitable": true
+    },
+    "8253": {
+      "roe": 0.083730005,
+      "profitable": true
+    },
+    "7747": {
+      "roe": 0.19239001,
+      "profitable": true
+    },
+    "4324": {
+      "roe": -0.46963,
+      "profitable": false
+    },
+    "3861": {
+      "roe": 0.05017,
+      "profitable": true
+    },
+    "7167": {
+      "roe": 0.08239,
+      "profitable": true
+    },
+    "2269": {
+      "roe": 0.048210002,
+      "profitable": true
+    },
+    "2432": {
+      "roe": 0.07472,
+      "profitable": true
+    },
+    "2579": {
+      "roe": -0.110640004,
+      "profitable": false
+    },
+    "4078": {
+      "roe": 0.03635,
+      "profitable": true
+    },
+    "8359": {
+      "roe": 0.060949996,
+      "profitable": true
+    },
+    "5301": {
+      "roe": 0.067150004,
+      "profitable": true
+    },
+    "5406": {
+      "roe": 0.07621,
+      "profitable": true
+    },
+    "4151": {
+      "roe": 0.08457,
+      "profitable": true
+    },
+    "6770": {
+      "roe": 0.06311,
+      "profitable": true
+    },
+    "5938": {
+      "roe": 0.01362,
+      "profitable": true
+    },
+    "6101": {
+      "roe": 0.25518,
+      "profitable": true
+    },
+    "1969": {
+      "roe": 0.19038,
+      "profitable": true
+    },
+    "2282": {
+      "roe": 0.06782,
+      "profitable": true
+    },
+    "4368": {
+      "roe": 0.12936,
+      "profitable": true
+    },
+    "4091": {
+      "roe": 0.1121,
+      "profitable": true
+    },
+    "3391": {
+      "roe": 0.07546,
+      "profitable": true
+    },
+    "9831": {
+      "roe": 0.02419,
+      "profitable": true
+    },
+    "9684": {
+      "roe": 0.08648,
+      "profitable": true
+    },
+    "4680": {
+      "roe": 0.22233,
+      "profitable": true
+    },
     "3405": {
       "roe": null,
       "profitable": true
     },
-    "8283": {
-      "roe": null,
+    "2371": {
+      "roe": 0.29622,
       "profitable": true
     },
-    "3778": {
-      "roe": 0.00772,
+    "5105": {
+      "roe": 0.13172,
+      "profitable": true
+    },
+    "4088": {
+      "roe": 0.016619999,
+      "profitable": true
+    },
+    "6473": {
+      "roe": 0.01798,
+      "profitable": true
+    },
+    "2871": {
+      "roe": 0.09937,
+      "profitable": true
+    },
+    "6753": {
+      "roe": 0.20856,
+      "profitable": true
+    },
+    "1893": {
+      "roe": 0.1867,
+      "profitable": true
+    },
+    "9616": {
+      "roe": 0.1528,
+      "profitable": true
+    },
+    "5032": {
+      "roe": 0.57595,
+      "profitable": true
+    },
+    "4971": {
+      "roe": 0.12784,
+      "profitable": true
+    },
+    "4208": {
+      "roe": 0.05562,
+      "profitable": true
+    },
+    "6330": {
+      "roe": -0.28717,
+      "profitable": false
+    },
+    "4676": {
+      "roe": 0.01006,
+      "profitable": true
+    },
+    "6135": {
+      "roe": 0.08607,
+      "profitable": true
+    },
+    "7282": {
+      "roe": 0.11326,
+      "profitable": true
+    },
+    "4369": {
+      "roe": 0.18105,
       "profitable": true
     },
     "1808": {
       "roe": 0.10023,
       "profitable": true
     },
-    "6845": {
-      "roe": 0.1573,
+    "4194": {
+      "roe": 0.24264999,
       "profitable": true
     },
-    "6508": {
-      "roe": 0.14968,
+    "5929": {
+      "roe": 0.17823,
       "profitable": true
     },
-    "3288": {
-      "roe": 0.20129,
+    "8252": {
+      "roe": 0.117,
       "profitable": true
     },
-    "9513": {
-      "roe": 0.04926,
+    "7752": {
+      "roe": 0.05094,
+      "profitable": true
+    },
+    "6507": {
+      "roe": 0.16195999,
+      "profitable": true
+    },
+    "8524": {
+      "roe": 0.06609,
+      "profitable": true
+    },
+    "2267": {
+      "roe": 0.077410005,
+      "profitable": true
+    },
+    "5074": {
+      "roe": 0.020680001,
+      "profitable": true
+    },
+    "3498": {
+      "roe": 0.26387,
+      "profitable": true
+    },
+    "5233": {
+      "roe": 0.03874,
       "profitable": true
     },
     "7762": {
@@ -1161,320 +1293,160 @@
       "roe": 0.082720004,
       "profitable": true
     },
-    "1662": {
-      "roe": 0.09154,
+    "6264": {
+      "roe": 0.19094999,
       "profitable": true
     },
-    "6330": {
-      "roe": -0.28717,
-      "profitable": false
-    },
-    "4680": {
-      "roe": 0.22233,
+    "6845": {
+      "roe": 0.1573,
       "profitable": true
     },
-    "6480": {
-      "roe": 0.05124,
+    "9513": {
+      "roe": 0.04926,
       "profitable": true
     },
-    "3132": {
-      "roe": 0.103690006,
+    "6448": {
+      "roe": 0.08583,
       "profitable": true
     },
-    "6135": {
-      "roe": 0.08607,
-      "profitable": true
-    },
-    "6952": {
-      "roe": 0.080170006,
-      "profitable": true
-    },
-    "9041": {
-      "roe": 0.0958,
-      "profitable": true
-    },
-    "3498": {
-      "roe": 0.26387,
-      "profitable": true
-    },
-    "7649": {
-      "roe": 0.16621,
-      "profitable": true
-    },
-    "9616": {
-      "roe": 0.1528,
-      "profitable": true
-    },
-    "9831": {
-      "roe": 0.02419,
-      "profitable": true
-    },
-    "1721": {
-      "roe": 0.09369001,
-      "profitable": true
-    },
-    "5331": {
-      "roe": 0.08904,
-      "profitable": true
-    },
-    "4443": {
-      "roe": 0.15695,
-      "profitable": true
-    },
-    "4676": {
-      "roe": 0.01006,
-      "profitable": true
-    },
-    "6961": {
-      "roe": 0.08899,
-      "profitable": true
-    },
-    "6471": {
-      "roe": 0.03571,
-      "profitable": true
-    },
-    "6923": {
-      "roe": 0.07222,
-      "profitable": true
-    },
-    "6103": {
-      "roe": 0.051119998,
-      "profitable": true
-    },
-    "5021": {
-      "roe": 0.113970004,
-      "profitable": true
-    },
-    "9506": {
-      "roe": 0.080129996,
-      "profitable": true
-    },
-    "7282": {
-      "roe": 0.11326,
-      "profitable": true
-    },
-    "7276": {
-      "roe": 0.030450001,
+    "8227": {
+      "roe": 0.09329,
       "profitable": true
     },
     "7721": {
       "roe": 0.09345999,
       "profitable": true
     },
-    "8377": {
-      "roe": 0.08507,
+    "5331": {
+      "roe": 0.08904,
       "profitable": true
     },
-    "4403": {
-      "roe": 0.14117,
+    "5021": {
+      "roe": 0.113970004,
       "profitable": true
     },
-    "9989": {
-      "roe": 0.11298,
-      "profitable": true
-    },
-    "8524": {
-      "roe": 0.06609,
-      "profitable": true
-    },
-    "9007": {
-      "roe": 0.07605,
-      "profitable": true
-    },
-    "6460": {
-      "roe": -0.015620001,
-      "profitable": false
-    },
-    "8227": {
-      "roe": 0.08986,
-      "profitable": true
-    },
-    "6387": {
-      "roe": 0.1532,
-      "profitable": true
-    },
-    "7951": {
-      "roe": 0.051220004,
-      "profitable": true
-    },
-    "4666": {
-      "roe": 0.41342998,
-      "profitable": true
-    },
-    "5393": {
-      "roe": 0.13928,
-      "profitable": true
-    },
-    "5741": {
-      "roe": 0.1347,
+    "6480": {
+      "roe": 0.05124,
       "profitable": true
     },
     "6055": {
       "roe": 0.18185,
       "profitable": true
     },
+    "7649": {
+      "roe": 0.16621,
+      "profitable": true
+    },
+    "6471": {
+      "roe": 0.03571,
+      "profitable": true
+    },
+    "4631": {
+      "roe": 0.102110006,
+      "profitable": true
+    },
+    "3132": {
+      "roe": 0.103690006,
+      "profitable": true
+    },
+    "3923": {
+      "roe": 0.55375,
+      "profitable": true
+    },
+    "9041": {
+      "roe": 0.0958,
+      "profitable": true
+    },
     "3769": {
       "roe": 0.21790001,
       "profitable": true
     },
-    "9143": {
-      "roe": 0.10507,
+    "6952": {
+      "roe": 0.080170006,
       "profitable": true
     },
-    "4527": {
-      "roe": 0.11635,
-      "profitable": true
-    },
-    "6235": {
-      "roe": 0.02876,
-      "profitable": true
-    },
-    "9509": {
-      "roe": 0.10303,
-      "profitable": true
-    },
-    "6951": {
-      "roe": 0.15697,
-      "profitable": true
-    },
-    "8050": {
-      "roe": 0.13159001,
-      "profitable": true
-    },
-    "6432": {
-      "roe": 0.15975,
-      "profitable": true
-    },
-    "3349": {
-      "roe": 0.11999,
-      "profitable": true
-    },
-    "3105": {
-      "roe": 0.00866,
-      "profitable": false
-    },
-    "5830": {
-      "roe": 0.08838,
-      "profitable": true
-    },
-    "4613": {
-      "roe": 0.094639994,
-      "profitable": true
-    },
-    "8334": {
-      "roe": 0.099580005,
-      "profitable": true
-    },
-    "9508": {
-      "roe": 0.13781,
-      "profitable": true
-    },
-    "4202": {
-      "roe": 0.03071,
-      "profitable": true
-    },
-    "6465": {
-      "roe": 0.10029,
+    "3288": {
+      "roe": 0.20129,
       "profitable": true
     },
     "6703": {
       "roe": 0.13194999,
       "profitable": true
     },
-    "9468": {
-      "roe": 0.01465,
+    "8377": {
+      "roe": 0.08507,
       "profitable": true
     },
-    "4902": {
-      "roe": 0.06601,
+    "1662": {
+      "roe": 0.09154,
       "profitable": true
     },
-    "9142": {
-      "roe": 0.09546,
+    "4403": {
+      "roe": 0.14117,
       "profitable": true
     },
-    "6376": {
-      "roe": 0.09738,
+    "5741": {
+      "roe": 0.1347,
       "profitable": true
     },
-    "6507": {
-      "roe": 0.16195999,
+    "1721": {
+      "roe": 0.09369001,
       "profitable": true
     },
-    "5232": {
-      "roe": 0.05811,
+    "4443": {
+      "roe": 0.15695,
       "profitable": true
     },
-    "4732": {
-      "roe": 0.20034,
+    "6387": {
+      "roe": 0.1532,
+      "profitable": true
+    },
+    "6103": {
+      "roe": 0.051119998,
+      "profitable": true
+    },
+    "3778": {
+      "roe": 0.00772,
+      "profitable": true
+    },
+    "6923": {
+      "roe": 0.07222,
+      "profitable": true
+    },
+    "9989": {
+      "roe": 0.11298,
+      "profitable": true
+    },
+    "9009": {
+      "roe": 0.090509996,
+      "profitable": true
+    },
+    "7956": {
+      "roe": 0.10804,
       "profitable": true
     },
     "9301": {
       "roe": 0.14419,
       "profitable": true
     },
-    "7581": {
-      "roe": 0.101339996,
-      "profitable": true
-    },
-    "5384": {
-      "roe": 0.11294,
-      "profitable": true
-    },
-    "9064": {
-      "roe": 0.0232,
-      "profitable": true
-    },
-    "4536": {
-      "roe": 0.12925,
-      "profitable": true
-    },
     "6925": {
       "roe": 0.040110003,
       "profitable": true
     },
-    "3046": {
-      "roe": 0.25534,
+    "6465": {
+      "roe": 0.10029,
       "profitable": true
     },
-    "5857": {
-      "roe": 0.1368,
+    "1951": {
+      "roe": 0.09198,
       "profitable": true
     },
-    "1959": {
-      "roe": 0.121429995,
+    "9401": {
+      "roe": 0.05069,
       "profitable": true
     },
-    "6814": {
-      "roe": 0.20661,
-      "profitable": true
-    },
-    "6999": {
-      "roe": 0.04741,
-      "profitable": true
-    },
-    "3480": {
-      "roe": 0.15158,
-      "profitable": true
-    },
-    "2501": {
-      "roe": null,
-      "profitable": true
-    },
-    "8304": {
-      "roe": 0.05592,
-      "profitable": true
-    },
-    "4369": {
-      "roe": 0.18105,
-      "profitable": true
-    },
-    "8253": {
-      "roe": 0.083730005,
-      "profitable": true
-    },
-    "6101": {
-      "roe": 0.25518,
+    "7966": {
+      "roe": 0.068909995,
       "profitable": true
     }
   }
