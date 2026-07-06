@@ -1,6 +1,6 @@
 {
   "created": "2026-06-01",
-  "last_updated": "2026-07-03",
+  "last_updated": "2026-07-06",
   "cash": 1000000.0,
   "positions": {},
   "pending_orders": {},
@@ -13,8 +13,6 @@
     "atr_period": 14,
     "source": "backtest optimised on 2026-06-02"
   },
-  "gc_wait": {
-    "6526": 1
-  },
+  "gc_wait": {},
   "stop_cooldowns": {}
 }
