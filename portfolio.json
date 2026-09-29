@@ -1,14 +1,9 @@
 {
   "created": "2026-06-01",
-  "last_updated": "2026-09-28",
+  "last_updated": "2026-09-29",
   "cash": 1000000.0,
   "positions": {},
-  "pending_orders": {
-    "8035": {
-      "action": "buy",
-      "deferred": 0
-    }
-  },
+  "pending_orders": {},
   "realized_trades": [],
   "total_realized_pnl": 0.0,
   "params": {
