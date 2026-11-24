@@ -1,0 +1,219 @@
+  ユニバースキャッシュ期限切れ (85日) → 再構築試行
+  JPX公式CSVダウンロード中 (attempt 1) ...
+    WARNING: JPX CSV 取得失敗 (attempt 1): HTTP Error 404: Not Found
+    → 14秒待機してリトライ 1/3 (JPX CSV)
+  JPX公式CSVダウンロード中 (attempt 2) ...
+    WARNING: JPX CSV 取得失敗 (attempt 2): HTTP Error 404: Not Found
+    → 12秒待機してリトライ 1/3 (JPX CSV)
+  JPX公式CSVダウンロード中 (attempt 3) ...
+    WARNING: JPX CSV 取得失敗 (attempt 3): HTTP Error 404: Not Found
+    ERROR: JPX CSV 全リトライ失敗
+  WARNING: JPX CSV 取得失敗 → 旧キャッシュ（期限切れ）で代替 (1159 銘柄)
+
+  売買代金・株価フィルター (1159 銘柄 → 1ヶ月データ一括取得) ...
+  ファンダメンタルズ取得中 (400 銘柄, 8並列) ...
+    進捗 100/400 ...
+    → 7秒待機してリトライ 1/3 (fundamentals 8303)
+    → 6秒待機してリトライ 1/3 (fundamentals 4507)
+    → 7秒待機してリトライ 1/3 (fundamentals 5101)
+    → 9秒待機してリトライ 1/3 (fundamentals 5334)
+    → 6秒待機してリトライ 1/3 (fundamentals 2801)
+    → 9秒待機してリトライ 1/3 (fundamentals 4768)
+    → 6秒待機してリトライ 1/3 (fundamentals 9531)
+    → 5秒待機してリトライ 1/3 (fundamentals 9042)
+    → 15秒待機してリトライ 2/3 (fundamentals 9042)
+    → 14秒待機してリトライ 2/3 (fundamentals 2801)
+    → 13秒待機してリトライ 2/3 (fundamentals 4507)
+    → 11秒待機してリトライ 2/3 (fundamentals 9531)
+    → 14秒待機してリトライ 2/3 (fundamentals 8303)
+    → 15秒待機してリトライ 2/3 (fundamentals 5101)
+    → 13秒待機してリトライ 2/3 (fundamentals 4768)
+    → 12秒待機してリトライ 2/3 (fundamentals 5334)
+    → 5秒待機してリトライ 1/3 (fundamentals 4203)
+    → 6秒待機してリトライ 1/3 (fundamentals 8331)
+    → 7秒待機してリトライ 1/3 (fundamentals 5411)
+    → 9秒待機してリトライ 1/3 (fundamentals 9962)
+    → 6秒待機してリトライ 1/3 (fundamentals 8050)
+    → 5秒待機してリトライ 1/3 (fundamentals 7261)
+    → 8秒待機してリトライ 1/3 (fundamentals 8697)
+    → 6秒待機してリトライ 1/3 (fundamentals 4385)
+    → 14秒待機してリトライ 2/3 (fundamentals 4203)
+    → 13秒待機してリトライ 2/3 (fundamentals 8331)
+    → 14秒待機してリトライ 2/3 (fundamentals 5411)
+    → 14秒待機してリトライ 2/3 (fundamentals 7261)
+    → 13秒待機してリトライ 2/3 (fundamentals 8050)
+    → 11秒待機してリトライ 2/3 (fundamentals 4385)
+    → 12秒待機してリトライ 2/3 (fundamentals 9962)
+    → 12秒待機してリトライ 2/3 (fundamentals 8697)
+    → 8秒待機してリトライ 1/3 (fundamentals 2768)
+    → 8秒待機してリトライ 1/3 (fundamentals 6324)
+    → 6秒待機してリトライ 1/3 (fundamentals 4506)
+    → 6秒待機してリトライ 1/3 (fundamentals 1911)
+    → 6秒待機してリトライ 1/3 (fundamentals 6370)
+    → 10秒待機してリトライ 1/3 (fundamentals 8795)
+    → 9秒待機してリトライ 1/3 (fundamentals 1878)
+    → 7秒待機してリトライ 1/3 (fundamentals 7733)
+    → 15秒待機してリトライ 2/3 (fundamentals 2768)
+    → 11秒待機してリトライ 2/3 (fundamentals 4506)
+    → 13秒待機してリトライ 2/3 (fundamentals 6324)
+    → 15秒待機してリトライ 2/3 (fundamentals 6370)
+    → 13秒待機してリトライ 2/3 (fundamentals 1911)
+    → 11秒待機してリトライ 2/3 (fundamentals 7733)
+    → 11秒待機してリトライ 2/3 (fundamentals 8795)
+    → 12秒待機してリトライ 2/3 (fundamentals 1878)
+    → 9秒待機してリトライ 1/3 (fundamentals 9021)
+    → 10秒待機してリトライ 1/3 (fundamentals 3402)
+    → 5秒待機してリトライ 1/3 (fundamentals 4188)
+    → 7秒待機してリトライ 1/3 (fundamentals 6407)
+    → 9秒待機してリトライ 1/3 (fundamentals 3407)
+    → 10秒待機してリトライ 1/3 (fundamentals 2587)
+    → 7秒待機してリトライ 1/3 (fundamentals 5333)
+    → 10秒待機してリトライ 1/3 (fundamentals 1942)
+    → 15秒待機してリトライ 2/3 (fundamentals 4188)
+    → 10秒待機してリトライ 2/3 (fundamentals 9021)
+    → 11秒待機してリトライ 2/3 (fundamentals 6407)
+    → 12秒待機してリトライ 2/3 (fundamentals 3402)
+    → 14秒待機してリトライ 2/3 (fundamentals 5333)
+    → 15秒待機してリトライ 2/3 (fundamentals 3407)
+    → 14秒待機してリトライ 2/3 (fundamentals 2587)
+    → 14秒待機してリトライ 2/3 (fundamentals 1942)
+    → 6秒待機してリトライ 1/3 (fundamentals 5019)
+    → 9秒待機してリトライ 1/3 (fundamentals 7202)
+    → 9秒待機してリトライ 1/3 (fundamentals 7309)
+    → 8秒待機してリトライ 1/3 (fundamentals 7259)
+    → 14秒待機してリトライ 2/3 (fundamentals 5019)
+    → 5秒待機してリトライ 1/3 (fundamentals 6481)
+    → 6秒待機してリトライ 1/3 (fundamentals 3659)
+    → 6秒待機してリトライ 1/3 (fundamentals 7550)
+    → 10秒待機してリトライ 1/3 (fundamentals 3132)
+    → 12秒待機してリトライ 2/3 (fundamentals 7202)
+    → 10秒待機してリトライ 2/3 (fundamentals 7259)
+    → 13秒待機してリトライ 2/3 (fundamentals 7309)
+    → 11秒待機してリトライ 2/3 (fundamentals 6481)
+    → 10秒待機してリトライ 2/3 (fundamentals 7550)
+    → 10秒待機してリトライ 2/3 (fundamentals 3659)
+    進捗 200/400 ...
+    進捗 300/400 ...
+    → 8秒待機してリトライ 1/3 (fundamentals 2002)
+    → 6秒待機してリトライ 1/3 (fundamentals 6941)
+    → 7秒待機してリトライ 1/3 (fundamentals 6473)
+    → 8秒待機してリトライ 1/3 (fundamentals 8334)
+    → 9秒待機してリトライ 1/3 (fundamentals 8377)
+    → 9秒待機してリトライ 1/3 (fundamentals 8366)
+    → 7秒待機してリトライ 1/3 (fundamentals 6622)
+    → 7秒待機してリトライ 1/3 (fundamentals 6507)
+    → 11秒待機してリトライ 2/3 (fundamentals 6941)
+    → 14秒待機してリトライ 2/3 (fundamentals 6473)
+    → 11秒待機してリトライ 2/3 (fundamentals 6622)
+    → 11秒待機してリトライ 2/3 (fundamentals 6507)
+    → 12秒待機してリトライ 2/3 (fundamentals 2002)
+    → 11秒待機してリトライ 2/3 (fundamentals 8334)
+    → 11秒待機してリトライ 2/3 (fundamentals 8377)
+    → 13秒待機してリトライ 2/3 (fundamentals 8366)
+    → 9秒待機してリトライ 1/3 (fundamentals 9616)
+    → 8秒待機してリトライ 1/3 (fundamentals 6952)
+    → 7秒待機してリトライ 1/3 (fundamentals 2432)
+    → 8秒待機してリトライ 1/3 (fundamentals 2871)
+    → 8秒待機してリトライ 1/3 (fundamentals 1721)
+    → 8秒待機してリトライ 1/3 (fundamentals 9024)
+    → 6秒待機してリトライ 1/3 (fundamentals 2264)
+    → 6秒待機してリトライ 1/3 (fundamentals 1963)
+    → 11秒待機してリトライ 2/3 (fundamentals 2432)
+    → 13秒待機してリトライ 2/3 (fundamentals 6952)
+    → 11秒待機してリトライ 2/3 (fundamentals 9616)
+    → 12秒待機してリトライ 2/3 (fundamentals 2264)
+    → 13秒待機してリトライ 2/3 (fundamentals 2871)
+    → 13秒待機してリトライ 2/3 (fundamentals 1721)
+    → 11秒待機してリトライ 2/3 (fundamentals 1963)
+    → 13秒待機してリトライ 2/3 (fundamentals 9024)
+    → 9秒待機してリトライ 1/3 (fundamentals 6674)
+    → 7秒待機してリトライ 1/3 (fundamentals 7731)
+    → 6秒待機してリトライ 1/3 (fundamentals 8056)
+    → 7秒待機してリトライ 1/3 (fundamentals 9009)
+    → 10秒待機してリトライ 1/3 (fundamentals 5991)
+    → 9秒待機してリトライ 1/3 (fundamentals 8848)
+    → 6秒待機してリトライ 1/3 (fundamentals 7189)
+    → 9秒待機してリトライ 1/3 (fundamentals 3349)
+    → 12秒待機してリトライ 2/3 (fundamentals 7731)
+    → 10秒待機してリトライ 2/3 (fundamentals 8056)
+    → 11秒待機してリトライ 2/3 (fundamentals 9009)
+    → 11秒待機してリトライ 2/3 (fundamentals 6674)
+    → 15秒待機してリトライ 2/3 (fundamentals 7189)
+    → 11秒待機してリトライ 2/3 (fundamentals 5991)
+    → 14秒待機してリトライ 2/3 (fundamentals 8848)
+    → 13秒待機してリトライ 2/3 (fundamentals 3349)
+    → 10秒待機してリトライ 1/3 (fundamentals 4732)
+    → 5秒待機してリトライ 1/3 (fundamentals 9508)
+    → 9秒待機してリトライ 1/3 (fundamentals 6376)
+    → 9秒待機してリトライ 1/3 (fundamentals 9831)
+    → 7秒待機してリトライ 1/3 (fundamentals 8233)
+    → 7秒待機してリトライ 1/3 (fundamentals 2531)
+    → 12秒待機してリトライ 2/3 (fundamentals 9508)
+    → 10秒待機してリトライ 1/3 (fundamentals 3288)
+    → 5秒待機してリトライ 1/3 (fundamentals 6135)
+    → 15秒待機してリトライ 2/3 (fundamentals 4732)
+    → 11秒待機してリトライ 2/3 (fundamentals 6376)
+    → 14秒待機してリトライ 2/3 (fundamentals 9831)
+    → 11秒待機してリトライ 2/3 (fundamentals 8233)
+    → 12秒待機してリトライ 2/3 (fundamentals 2531)
+    → 11秒待機してリトライ 2/3 (fundamentals 6135)
+    → 14秒待機してリトライ 2/3 (fundamentals 3288)
+    → 7秒待機してリトライ 1/3 (fundamentals 7173)
+    → 6秒待機してリトライ 1/3 (fundamentals 2501)
+    → 9秒待機してリトライ 1/3 (fundamentals 8252)
+    → 9秒待機してリトライ 1/3 (fundamentals 4536)
+    → 14秒待機してリトライ 2/3 (fundamentals 7173)
+    → 7秒待機してリトライ 1/3 (fundamentals 3397)
+    → 7秒待機してリトライ 1/3 (fundamentals 5233)
+    → 7秒待機してリトライ 1/3 (fundamentals 4631)
+    → 13秒待機してリトライ 2/3 (fundamentals 2501)
+    → 6秒待機してリトライ 1/3 (fundamentals 5301)
+    → 11秒待機してリトライ 2/3 (fundamentals 5233)
+    → 13秒待機してリトライ 2/3 (fundamentals 3397)
+    → 12秒待機してリトライ 2/3 (fundamentals 4631)
+    → 12秒待機してリトライ 2/3 (fundamentals 8252)
+    → 13秒待機してリトライ 2/3 (fundamentals 4536)
+    → 12秒待機してリトライ 2/3 (fundamentals 5301)
+    → 8秒待機してリトライ 1/3 (fundamentals 9513)
+    → 9秒待機してリトライ 1/3 (fundamentals 4626)
+    進捗 400/400 ...
+  ファンダ取得完了: 333 銘柄 / ROE≥8%かつ黒字: 0 銘柄
+  流動性フィルター通過: 569 銘柄
+  ファンダフィルター後 (ROE≥8%&黒字): 67 銘柄 → 上位 67 銘柄を採用
+
+  順位   コード     銘柄名                        株価       平均売買代金/日
+  ──── ─────── ──────────────────── ──────── ──────────────
+  1    5101    横浜ゴム                 ¥ 6,814  ¥    94.7億円
+  2    5334    日特エンジ                ¥ 3,454  ¥    93.6億円
+  3    4507    塩野義製薬                ¥ 3,121  ¥    93.1億円
+  4    4768    4768                 ¥ 3,867  ¥    92.9億円
+  5    8303    SBI新生銀行              ¥ 1,712  ¥    91.6億円
+  6    2801    2801                 ¥ 1,783  ¥    91.4億円
+  7    9531    東京ガス                 ¥ 6,560  ¥    89.8億円
+  8    9042    9042                 ¥ 4,756  ¥    89.7億円
+  9    4203    4203                 ¥ 6,189  ¥    88.2億円
+  10   8331    8331                 ¥ 2,288  ¥    88.0億円
+  ... 他 57 銘柄
+
+════════════════════════════════════════════════════════════════════════
+  J-Titan シグナルスクリーナー  2026-11-25 04:38
+  モード    : 動的選定 上位67銘柄
+  フィルター: SMA=20  RSI≥60  ADX≥25  出来高比率≥1.05x
+────────────────────────────────────────────────────────────────────────
+  日経平均 : ¥66,330  SMA25: ¥61,898  ▲ 地合い良好（買い許可）
+────────────────────────────────────────────────────────────────────────
+
+  ★ 買いシグナル確定（全フィルター通過）  1 銘柄
+  コード     銘柄名                        終値    RSI    ADX     出来高比    スコア
+  ─────── ──────────────────── ──────── ────── ────── ──────── ──────
+  8334    8334                 ¥  3,000  68.6   25.1    2.25x   21.0
+
+  △ GC成立だがフィルター未通過  1 銘柄
+  コード     銘柄名                        終値    RSI    ADX     出来高比 未通過理由
+  ─────── ──────────────────── ──────── ────── ────── ──────── ──────────
+  4768    4768                 ¥  3,063  58.7   15.3    1.26x  RSI=58.7 / ADX=15.3
+
+────────────────────────────────────────────────────────────────────────
+  スキャン: 67 銘柄  GC銘柄: 2  買い確定: 1  データなし: 0
+════════════════════════════════════════════════════════════════════════
+
